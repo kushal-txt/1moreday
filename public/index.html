@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneMoreDay — Anonymous Peer Support Network</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 50px;
+    align-items: center;
+    margin-bottom: 80px;
+  }
+  .hero-art img {
+    width: 100%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    display: block;
+  }
+  .hero-tag {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: inline-block;
+    border-left: 2px solid var(--accent);
+    padding-left: 8px;
+  }
+  .hero-h1 {
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  .hero-h1 span {
+    color: var(--accent);
+  }
+  .hero-desc {
+    font-size: 17px;
+    color: var(--text-muted);
+    margin-bottom: 36px;
+    max-width: 500px;
+  }
+
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    margin-bottom: 80px;
+  }
+  .rule-card {
+    padding: 30px;
+    border-right: 1px solid var(--border);
+  }
+  .rule-card:last-child { border-right: none; }
+  .rule-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .rule-h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .rule-p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .entry-box {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 40px;
+    max-width: 500px;
+    margin: 0 auto 80px;
+    text-align: center;
+  }
+  .entry-box h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .entry-box p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+  .name-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .btn-gen {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 0 16px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .btn-gen:hover { border-color: var(--accent); }
+  .agreement-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    text-align: left;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+  .agreement-row input { margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a href="/" class="brand">
+    One<span>More</span>Day
+    <span class="brand-badge">Sanctuary</span>
+  </a>
+  <nav class="nav-links">
+    <a href="/circles">Campfire Circles</a>
+    <a href="/helplines">Global Helplines</a>
+    <a href="/#entry">Join Now</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <!-- Hero Section -->
+  <section class="hero-grid">
+    <div>
+      <span class="hero-tag">Zero Accounts &middot; Strict Gender Neutrality &middot; Text Only</span>
+      <h1 class="hero-h1">You are not the <span>only one.</span></h1>
+      <p class="hero-desc">
+        Connect in real-time with people carrying the exact same life burden. No hired counselors, no social feeds, no judgment. Just pure human solidarity.
+      </p>
+      <div style="display: flex; gap: 14px;">
+        <a href="#entry" class="btn-primary">Enter A Campfire</a>
+        <a href="/helplines" class="btn-ghost">Crisis Helplines</a>
+      </div>
+    </div>
+    <div class="hero-art">
+      <img src="/illustrations/hero-support.jpg" alt="Abstract figures in supportive listening posture">
+    </div>
+  </section>
+
+  <!-- 4 Core Rules -->
+  <section class="rules-grid">
+    <div class="rule-card">
+      <div class="rule-num">RULE 01</div>
+      <div class="rule-h3">No Accounts Required</div>
+      <div class="rule-p">Pick an anonymous handle and enter. No passwords, no email tracking, no friction at 2 AM.</div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">RULE 02</div>
+      <div class="rule-h3">Strictly Gender Neutral</div>
+      <div class="rule-p">No pronouns, no demographics, no dating dynamics. The conversation focuses 100% on the burden.</div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">RULE 03</div>
+      <div class="rule-h3">100% Text-Only</div>
+      <div class="rule-p">No photos, attachments, or image uploads. Complete safety against harmful or graphic imagery.</div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">RULE 04</div>
+      <div class="rule-h3">Ephemeral Encounters</div>
+      <div class="rule-p">No friends, no following. Come, share deeply, leave lighter. Every chat is a one-time gift.</div>
+    </div>
+  </section>
+
+  <!-- Step 1: Entry Box -->
+  <section id="entry" class="entry-box">
+    <h2>Who are you today?</h2>
+    <p>Choose an anonymous nickname. Valid only for this session.</p>
+    
+    <div class="name-row">
+      <input type="text" id="nicknameInput" class="chat-input" placeholder="e.g. QuietOak" style="background: var(--bg);">
+      <button type="button" id="genBtn" class="btn-gen">GEN</button>
+    </div>
+
+    <div class="agreement-row">
+      <input type="checkbox" id="agreeCheck" checked>
+      <label for="agreeCheck">I agree to be respectful, preserve anonymity, and remember we are all equals here to heal.</label>
+    </div>
+
+    <button type="button" id="enterBtn" class="btn-primary" style="width: 100%;">Enter Campfires</button>
+  </section>
+
+</div>
+
+<footer class="footer">
+  <p>OneMoreDay is a peer-to-peer solidarity initiative. We are not therapy or medical emergency services.</p>
+  <div style="margin-top: 10px;">
+    <a href="/circles">Campfires</a>
+    <a href="/helplines">Helplines</a>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+  const input = document.getElementById('nicknameInput');
+  const genBtn = document.getElementById('genBtn');
+  const enterBtn = document.getElementById('enterBtn');
+  const agreeCheck = document.getElementById('agreeCheck');
+
+  // Pre-fill or generate random name
+  const existing = OMD.getSession();
+  input.value = existing || OMD.generateRandomName();
+
+  genBtn.addEventListener('click', () => {
+    input.value = OMD.generateRandomName();
+  });
+
+  enterBtn.addEventListener('click', () => {
+    if (!agreeCheck.checked) {
+      alert('Please agree to the community rules to proceed.');
+      return;
+    }
+    const name = input.value.trim() || OMD.generateRandomName();
+    OMD.setSession(name);
+    window.location.href = '/circles';
+  });
+</script>
+
+</body>
+</html>

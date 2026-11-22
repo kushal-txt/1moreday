@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private 1-on-1 Sanctuary — OneMoreDay</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <a href="/" class="brand">
+    One<span>More</span>Day
+    <span class="brand-badge">Private DM</span>
+  </a>
+  <div class="nav-user">
+    <span>●</span>
+    <span id="userBadge">Anonymous</span>
+  </div>
+  <nav class="nav-links">
+    <a href="/circles">Campfires</a>
+    <a href="/helplines">Helplines</a>
+  </nav>
+</header>
+
+<div class="container" style="max-width: 800px; padding-top: 24px;">
+
+  <!-- Chat Box -->
+  <div style="border: 1px solid var(--border); background: var(--surface);">
+    
+    <div class="chat-header">
+      <div>
+        <div class="chat-title" id="dmHeader">Connected with Peer</div>
+        <div class="chat-subtitle">Private &middot; Encrypted &middot; Ephemeral (No logs saved)</div>
+      </div>
+      <button type="button" class="btn-danger" onclick="leaveAndWipe()">End & Wipe Chat</button>
+    </div>
+
+    <div class="chat-messages" id="dmBox" style="min-height: 400px; max-height: 550px;">
+      <div class="msg system">
+        Both peers have mutually accepted this private room. When either leaves, this conversation evaporates forever.
+      </div>
+
+      <div class="msg other" id="greetingMsg">
+        <div class="msg-author" id="peerAuthor">Peer</div>
+        <div class="msg-bubble">
+          Hey, thanks for accepting. I just really needed to talk to someone who understands.
+        </div>
+        <div class="msg-time">Just now</div>
+      </div>
+    </div>
+
+    <div class="chat-input-bar">
+      <input type="text" id="dmInput" class="chat-input" placeholder="Type your message privately... (Links blocked)">
+      <button type="button" id="dmSendBtn" class="btn-primary" style="padding: 12px 24px;">Send</button>
+    </div>
+
+  </div>
+
+</div>
+
+<footer class="footer">
+  <p>OneMoreDay &middot; Ephemeral Encounters. No persistence.</p>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+  let myName = OMD.getSession() || OMD.generateRandomName();
+  document.getElementById('userBadge').innerText = myName;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const peerName = urlParams.get('peer') || 'QuietPeer';
+
+  document.getElementById('dmHeader').innerText = `Private Encounter with ${peerName}`;
+  document.getElementById('peerAuthor').innerText = peerName;
+
+  const dmBox = document.getElementById('dmBox');
+  const dmInput = document.getElementById('dmInput');
+  const dmSendBtn = document.getElementById('dmSendBtn');
+
+  function sendDm() {
+    const raw = dmInput.value.trim();
+    if (!raw) return;
+
+    const sanitized = OMD.sanitizeText(raw);
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'msg self';
+    msgDiv.innerHTML = `
+      <div class="msg-author">${myName} (You)</div>
+      <div class="msg-bubble">${sanitized}</div>
+      <div class="msg-time">Just now</div>
+    `;
+    dmBox.appendChild(msgDiv);
+    dmBox.scrollTop = dmBox.scrollHeight;
+    dmInput.value = '';
+  }
+
+  dmSendBtn.addEventListener('click', sendDm);
+  dmInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendDm();
+  });
+
+  function leaveAndWipe() {
+    if (confirm('Are you sure you want to end this conversation? All text will be immediately wiped.')) {
+      window.location.href = '/circles';
+    }
+  }
+</script>
+
+</body>
+</html>

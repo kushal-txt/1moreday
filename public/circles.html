@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campfire Circles — OneMoreDay</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .invite-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(10, 13, 18, 0.85);
+    z-index: 200;
+    justify-content: center;
+    align-items: center;
+  }
+  .invite-modal.active { display: flex; }
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 36px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+  }
+  .modal-box h3 {
+    font-size: 18px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .modal-box p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+  .modal-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a href="/" class="brand">
+    One<span>More</span>Day
+    <span class="brand-badge">Campfires</span>
+  </a>
+  <div class="nav-user">
+    <span>●</span>
+    <span id="userBadge">Anonymous</span>
+  </div>
+  <nav class="nav-links">
+    <a href="/circles" class="active">Campfires</a>
+    <a href="/helplines">Helplines</a>
+  </nav>
+</header>
+
+<div class="container" style="padding-top: 24px;">
+
+  <!-- Gentle Crisis Alert Banner (Surfaces if triggered) -->
+  <div id="crisisAlert" class="crisis-banner" style="display: none;">
+    <div class="crisis-text">
+      <h4>Need immediate professional support?</h4>
+      <p>If you're in acute distress, free and confidential crisis counselors are standing by in your country right now.</p>
+    </div>
+    <a href="/helplines" class="btn-coral">View Helplines</a>
+  </div>
+
+  <!-- Chat Layout -->
+  <div class="chat-layout">
+    
+    <!-- Sidebar: 3 Core Campfires (Concentrated Liquidity) -->
+    <div class="chat-sidebar">
+      <div class="sidebar-header">24/7 Sanctuaries</div>
+      
+      <a href="?room=overthinking" class="circle-nav-item active" id="tab-overthinking">
+        <div>
+          <div class="circle-nav-name">The Overthinking Room</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Depression, loneliness, insomnia</div>
+        </div>
+        <div class="circle-nav-count">● 8 online</div>
+      </a>
+
+      <a href="?room=heavy-chest" class="circle-nav-item" id="tab-heavy-chest">
+        <div>
+          <div class="circle-nav-name">The Heavy Chest</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Financial stress, debt, job loss</div>
+        </div>
+        <div class="circle-nav-count">● 5 online</div>
+      </a>
+
+      <a href="?room=broken-ties" class="circle-nav-item" id="tab-broken-ties">
+        <div>
+          <div class="circle-nav-name">Broken Ties</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Heartbreak, family estrangement</div>
+        </div>
+        <div class="circle-nav-count">● 6 online</div>
+      </a>
+
+      <div style="padding: 20px; margin-top: auto; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted);">
+        Every room is capped at 10 people to preserve intimacy. You can lurk and read silently.
+      </div>
+    </div>
+
+    <!-- Main Live Chat Window -->
+    <div class="chat-main">
+      <div class="chat-header">
+        <div>
+          <div class="chat-title" id="roomTitle">The Overthinking Room &middot; Circle #1</div>
+          <div class="chat-subtitle">Capped at 10 peers &middot; Ephemeral in-memory routing</div>
+        </div>
+        <div class="slow-mode-pill">Slow Mode: 5s</div>
+      </div>
+
+      <div class="chat-messages" id="messagesBox">
+        <div class="msg system">
+          Welcome to the circle. Take a breath. You don't have to carry your mask here.
+        </div>
+        
+        <div class="msg other">
+          <div class="msg-author">QuietRiver</div>
+          <div class="msg-bubble">
+            It is 2:30 AM and the silence in my room feels so loud. It feels like everyone else has their life figured out except me.
+          </div>
+          <div class="msg-time">2:31 AM &middot; <a href="#" style="color:var(--accent); text-decoration:none;" onclick="triggerInvite('QuietRiver'); return false;">[Invite 1-on-1]</a></div>
+        </div>
+
+        <div class="msg other">
+          <div class="msg-author">WanderingEcho</div>
+          <div class="msg-bubble">
+            I promise you nobody has it figured out. Some of us are just better at hiding the panic. You are doing okay just being here.
+          </div>
+          <div class="msg-time">2:32 AM &middot; <a href="#" style="color:var(--accent); text-decoration:none;" onclick="triggerInvite('WanderingEcho'); return false;">[Invite 1-on-1]</a></div>
+        </div>
+      </div>
+
+      <div class="chat-input-bar">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Type a reflection... (Links and contact info automatically blocked)">
+        <button type="button" id="sendBtn" class="btn-primary" style="padding: 12px 20px;">Send</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- 1-on-1 Mutual Invite Modal -->
+<div class="invite-modal" id="inviteModal">
+  <div class="modal-box">
+    <h3 id="modalPeerName">QuietRiver</h3>
+    <p>Would you like to open a private, encrypted 1-on-1 DM with this peer? Both people must accept.</p>
+    <div class="modal-btns">
+      <button class="btn-coral" onclick="acceptInvite()">Accept 1-on-1</button>
+      <button class="btn-ghost" onclick="closeModal()">Decline</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>OneMoreDay &middot; Every conversation is an ephemeral gift. No logs kept.</p>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+  // Ensure Nickname exists
+  let myName = OMD.getSession();
+  if (!myName) {
+    myName = OMD.generateRandomName();
+    OMD.setSession(myName);
+  }
+  document.getElementById('userBadge').innerText = myName;
+
+  // Track room topic from query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentRoom = urlParams.get('room') || 'overthinking';
+
+  // Highlight active sidebar
+  document.querySelectorAll('.circle-nav-item').forEach(el => el.classList.remove('active'));
+  const activeTab = document.getElementById('tab-' + currentRoom);
+  if (activeTab) activeTab.classList.add('active');
+
+  const titles = {
+    'overthinking': 'The Overthinking Room &middot; Circle #1',
+    'heavy-chest': 'The Heavy Chest &middot; Financial Stress Circle #1',
+    'broken-ties': 'Broken Ties &middot; Relationship & Family Circle #1'
+  };
+  document.getElementById('roomTitle').innerHTML = titles[currentRoom] || titles['overthinking'];
+
+  // Chat send logic with safety filters
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const messagesBox = document.getElementById('messagesBox');
+  const crisisAlert = document.getElementById('crisisAlert');
+
+  let lastSentTime = 0;
+
+  function postMessage() {
+    const raw = chatInput.value.trim();
+    if (!raw) return;
+
+    // Slow mode enforcement (5s)
+    const now = Date.now();
+    if (now - lastSentTime < 5000) {
+      alert('Slow mode: Please wait 5 seconds between messages.');
+      return;
+    }
+
+    // Crisis keyword check
+    if (OMD.checkForCrisis(raw)) {
+      crisisAlert.style.display = 'flex';
+    }
+
+    // Sanitize contact info & URLs
+    const sanitized = OMD.sanitizeText(raw);
+
+    // Render self bubble
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'msg self';
+    msgDiv.innerHTML = `
+      <div class="msg-author">${myName} (You)</div>
+      <div class="msg-bubble">${sanitized}</div>
+      <div class="msg-time">Just now</div>
+    `;
+    messagesBox.appendChild(msgDiv);
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+
+    chatInput.value = '';
+    lastSentTime = now;
+  }
+
+  sendBtn.addEventListener('click', postMessage);
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') postMessage();
+  });
+
+  // 1-on-1 Invite triggers
+  let targetPeer = '';
+  function triggerInvite(peer) {
+    targetPeer = peer;
+    document.getElementById('modalPeerName').innerText = `Chat 1-on-1 with ${peer}`;
+    document.getElementById('inviteModal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('inviteModal').classList.remove('active');
+  }
+
+  function acceptInvite() {
+    closeModal();
+    // Redirect to private DM with random room UUID
+    const randomDmId = 'dm-' + Math.random().toString(36).substring(2, 10);
+    window.location.href = `/dm?id=${randomDmId}&peer=${encodeURIComponent(targetPeer)}`;
+  }
+</script>
+
+</body>
+</html>

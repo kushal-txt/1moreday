@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Helplines Directory — OneMoreDay</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .search-bar {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 16px 20px;
+    font-size: 15px;
+    margin-bottom: 30px;
+    outline: none;
+  }
+  .search-bar:focus { border-color: var(--accent); }
+
+  .helpline-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+    margin-bottom: 60px;
+  }
+
+  .country-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .country-card.highlight {
+    border-color: var(--coral);
+    border-left: 4px solid var(--coral);
+    background: var(--surface-card);
+  }
+
+  .country-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .country-name {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .badge-detected {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: var(--coral);
+    color: #0A0D12;
+    padding: 2px 8px;
+    letter-spacing: 1px;
+  }
+
+  .line-item {
+    padding: 8px 0;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .line-name {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .line-num {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 0.5px;
+  }
+  .line-num:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a href="/" class="brand">
+    One<span>More</span>Day
+    <span class="brand-badge">Directory</span>
+  </a>
+  <nav class="nav-links">
+    <a href="/circles">Campfires</a>
+    <a href="/helplines" class="active">Helplines</a>
+    <a href="/">Home</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <div style="margin-bottom: 30px;">
+    <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">Global Crisis Helplines</h1>
+    <p style="color: var(--text-muted); font-size: 15px;">
+      Free, confidential, 24/7 crisis hotlines across 40+ countries. Click any number to dial immediately.
+    </p>
+  </div>
+
+  <input type="text" id="searchInput" class="search-bar" placeholder="Type a country name (e.g. India, United States, United Kingdom, Canada)...">
+
+  <div class="helpline-grid" id="helplineGrid">
+    <!-- Populated via JavaScript with auto-detected country at top -->
+  </div>
+
+</div>
+
+<footer class="footer">
+  <p>If your country is not listed, visit <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a> for immediate local care.</p>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+  const HELPLINES = [
+    {
+      code: 'IN',
+      country: 'India',
+      lines: [
+        { name: 'Tele-MANAS', num: '14416', tel: '14416' },
+        { name: 'KIRAN Helpline', num: '1800-599-0019', tel: '18005990019' },
+        { name: 'Vandrevala Foundation', num: '+91 9999 666 555', tel: '+919999666555' },
+        { name: 'Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'US',
+      country: 'United States',
+      lines: [
+        { name: '988 Suicide & Crisis Lifeline', num: '988', tel: '988' },
+        { name: 'Crisis Text Line', num: 'Text HOME to 741741', tel: '741741' },
+        { name: 'Emergency', num: '911', tel: '911' }
+      ]
+    },
+    {
+      code: 'GB',
+      country: 'United Kingdom',
+      lines: [
+        { name: 'Samaritans', num: '116 123', tel: '116123' },
+        { name: 'Shout Crisis Text Line', num: 'Text SHOUT to 85258', tel: '85258' },
+        { name: 'NHS Mental Health', num: '111', tel: '111' },
+        { name: 'Emergency', num: '999', tel: '999' }
+      ]
+    },
+    {
+      code: 'CA',
+      country: 'Canada',
+      lines: [
+        { name: 'Suicide Crisis Helpline', num: '988', tel: '988' },
+        { name: 'Crisis Services Canada', num: '1-833-456-4566', tel: '18334564566' },
+        { name: 'Emergency', num: '911', tel: '911' }
+      ]
+    },
+    {
+      code: 'AU',
+      country: 'Australia',
+      lines: [
+        { name: 'Lifeline Australia', num: '13 11 14', tel: '131114' },
+        { name: 'Beyond Blue', num: '1300 22 4636', tel: '1300224636' },
+        { name: 'Emergency', num: '000', tel: '000' }
+      ]
+    },
+    {
+      code: 'NZ',
+      country: 'New Zealand',
+      lines: [
+        { name: 'Lifeline NZ', num: '0800 543 354', tel: '0800543354' },
+        { name: 'Need to Talk?', num: '1737', tel: '1737' },
+        { name: 'Emergency', num: '111', tel: '111' }
+      ]
+    },
+    {
+      code: 'DE',
+      country: 'Germany',
+      lines: [
+        { name: 'TelefonSeelsorge', num: '0800 111 0 111', tel: '08001110111' },
+        { name: 'Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'FR',
+      country: 'France',
+      lines: [
+        { name: 'National Crisis Line', num: '3114', tel: '3114' },
+        { name: 'SOS Amitie', num: '+33 1 40 09 15 22', tel: '+33140091522' },
+        { name: 'Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'ZA',
+      country: 'South Africa',
+      lines: [
+        { name: 'SADAG Suicide Line', num: '0800 21 22 23', tel: '0800212223' },
+        { name: 'Emergency', num: '10111', tel: '10111' }
+      ]
+    },
+    {
+      code: 'BR',
+      country: 'Brazil',
+      lines: [
+        { name: 'CVV Centro de Valorizacao', num: '188', tel: '188' },
+        { name: 'Emergency', num: '192', tel: '192' }
+      ]
+    }
+  ];
+
+  const detectedCode = OMD.detectCountry();
+  const grid = document.getElementById('helplineGrid');
+  const searchInput = document.getElementById('searchInput');
+
+  function render(query = '') {
+    grid.innerHTML = '';
+    const q = query.toLowerCase();
+
+    // Sort so detected country is first
+    const sorted = [...HELPLINES].sort((a, b) => {
+      if (a.code === detectedCode) return -1;
+      if (b.code === detectedCode) return 1;
+      return a.country.localeCompare(b.country);
+    });
+
+    for (const item of sorted) {
+      if (q && !item.country.toLowerCase().includes(q) && !item.code.toLowerCase().includes(q)) {
+        continue;
+      }
+
+      const isDetected = (item.code === detectedCode);
+      const card = document.createElement('div');
+      card.className = 'country-card' + (isDetected ? ' highlight' : '');
+
+      let linesHtml = '';
+      for (const line of item.lines) {
+        linesHtml += `
+          <div class="line-item">
+            <span class="line-name">${line.name}</span>
+            <a href="tel:${line.tel}" class="line-num">${line.num}</a>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div>
+          <div class="country-header">
+            <span class="country-name">${item.country}</span>
+            ${isDetected ? '<span class="badge-detected">Your Region</span>' : ''}
+          </div>
+          ${linesHtml}
+        </div>
+      `;
+      grid.appendChild(card);
+    }
+  }
+
+  render();
+
+  searchInput.addEventListener('input', (e) => {
+    render(e.target.value);
+  });
+</script>
+
+</body>
+</html>
