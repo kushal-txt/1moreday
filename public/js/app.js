@@ -453,5 +453,120 @@ const OMD = {
       clearInterval(quoteTimer);
       if (fallbackTimer) clearTimeout(fallbackTimer);
     };
+  },
+
+  // --- 8. Country Detection ---
+  detectCountry() {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      const tzMap = {
+        'Asia/Kolkata': 'IN', 'Asia/Calcutta': 'IN',
+        'Asia/Shanghai': 'CN', 'Asia/Chongqing': 'CN', 'Asia/Urumqi': 'CN', 'Asia/Harbin': 'CN',
+        'America/New_York': 'US', 'America/Chicago': 'US', 'America/Denver': 'US', 'America/Los_Angeles': 'US',
+        'America/Phoenix': 'US', 'America/Anchorage': 'US', 'Pacific/Honolulu': 'US',
+        'Europe/London': 'GB',
+        'America/Toronto': 'CA', 'America/Vancouver': 'CA', 'America/Montreal': 'CA',
+        'Australia/Sydney': 'AU', 'Australia/Melbourne': 'AU', 'Australia/Brisbane': 'AU',
+        'Europe/Berlin': 'DE', 'Europe/Paris': 'FR', 'Europe/Rome': 'IT', 'Europe/Madrid': 'ES',
+        'Asia/Tokyo': 'JP', 'Asia/Seoul': 'KR', 'Asia/Singapore': 'SG', 'Asia/Dubai': 'AE',
+        'America/Sao_Paulo': 'BR', 'America/Mexico_City': 'MX', 'Africa/Johannesburg': 'ZA',
+        'Europe/Amsterdam': 'NL', 'Europe/Stockholm': 'SE', 'Europe/Zurich': 'CH', 'Europe/Dublin': 'IE',
+        'Pacific/Auckland': 'NZ', 'Asia/Bangkok': 'TH', 'Asia/Jakarta': 'ID', 'Asia/Manila': 'PH',
+        'Asia/Karachi': 'PK', 'Asia/Dhaka': 'BD', 'Asia/Colombo': 'LK', 'Asia/Kathmandu': 'NP'
+      };
+
+      if (tzMap[tz]) return tzMap[tz];
+
+      const langs = navigator.languages || [navigator.language || ''];
+      for (const lang of langs) {
+        if (lang && lang.includes('-')) {
+          const region = lang.split('-')[1].toUpperCase();
+          if (region && region.length === 2) return region;
+        }
+      }
+
+      return 'IN';
+    } catch (e) {
+      return 'IN';
+    }
+  },
+
+  // --- 9. Community Infrastructure & Donation Fund ---
+  DONATION_CONFIG: {
+    bmacUrl: 'https://buymeacoffee.com/1moreday',
+    kofiUrl: 'https://ko-fi.com/1moreday',
+    upiId: 'kushal@upi',
+    upiName: '1MoreDay Sanctuary'
+  },
+
+  openDonationModal() {
+    let modal = document.getElementById('donationModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'donationModal';
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-box" style="max-width: 500px; text-align: left; padding: 32px 28px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span class="sanctuary-icon-badge" style="margin-bottom:0;">Infrastructure Fund</span>
+            <button type="button" id="closeDonationBtn" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; line-height:1;">✕</button>
+          </div>
+
+          <h3 style="color:var(--text); font-size:20px; margin-bottom:8px;">Keep The Campfires Burning</h3>
+          <p style="font-size:13px; color:var(--text-muted); line-height:1.6; margin-bottom:20px;">
+            1MoreDay is 100% free, anonymous, and ad-free. Zero paywalls, zero tracking. 
+            All contributions go directly toward database capacity, server memory, and keeping this sanctuary alive 24/7.
+          </p>
+
+          <div style="background:var(--surface-card); border:1px solid var(--border); padding:16px; margin-bottom:18px;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--coral); font-weight:700; margin-bottom:8px;">
+              International Support (Credit / Debit Cards, Apple Pay, PayPal)
+            </div>
+            <a href="${this.DONATION_CONFIG.bmacUrl}" target="_blank" rel="noopener" class="btn-primary" style="display:block; text-align:center; padding:12px 18px; font-size:13px; text-decoration:none;">
+              Support via Buy Me a Coffee &rarr;
+            </a>
+          </div>
+
+          <div style="background:var(--surface-card); border:1px solid var(--border); padding:16px; margin-bottom:20px;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--accent); font-weight:700; margin-bottom:8px;">
+              India &middot; Instant UPI (GPay, PhonePe, Paytm, BHIM)
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="text" id="upiIdInput" readonly value="${this.DONATION_CONFIG.upiId}" style="flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:10px 14px; font-size:13px;">
+              <button type="button" id="copyUpiBtn" class="btn-ghost" style="padding:10px 16px; font-size:12px;">Copy UPI</button>
+            </div>
+            <div id="upiCopiedNotice" style="display:none; font-size:11px; color:var(--success); margin-top:6px;">UPI ID copied to clipboard!</div>
+          </div>
+
+          <div style="font-size:11px; color:var(--text-muted); line-height:1.5;">
+            Thank you for helping keep this safe haven online for someone carrying burdens in the dark tonight.
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      document.getElementById('closeDonationBtn').addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('active');
+      });
+
+      const copyBtn = document.getElementById('copyUpiBtn');
+      const upiInput = document.getElementById('upiIdInput');
+      const copiedNotice = document.getElementById('upiCopiedNotice');
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(upiInput.value).then(() => {
+          copiedNotice.style.display = 'block';
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copiedNotice.style.display = 'none';
+            copyBtn.textContent = 'Copy UPI';
+          }, 3000);
+        });
+      });
+    }
+
+    modal.classList.add('active');
   }
 };

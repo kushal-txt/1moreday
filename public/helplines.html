@@ -160,9 +160,9 @@
   </a>
   <nav class="nav-links">
     <a href="/circles">Campfires</a>
-    <a href="/dm" style="color:var(--coral);">1-on-1 Chat</a>
+    <a href="/dm">1-on-1 Sanctuary</a>
     <a href="/helplines" class="active">Helplines</a>
-    <a href="/">Home</a>
+    <a href="javascript:void(0)" onclick="OMD.openDonationModal()" style="color:var(--coral); font-weight:600;">Support</a>
   </nav>
 </header>
 
@@ -214,6 +214,9 @@
 
 <footer class="footer">
   <p>If your country is not listed, visit <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a> for verified local care in 175+ nations.</p>
+  <div style="margin-top: 8px;">
+    <a href="javascript:void(0)" onclick="OMD.openDonationModal()" style="color:var(--coral); font-size:12px; text-decoration:none;">Support 1MoreDay &middot; Server &amp; Database Fund</a>
+  </div>
 </footer>
 
 <script src="/js/app.js"></script>
@@ -703,7 +706,9 @@
     }
   ];
 
-  const detectedCode = OMD.detectCountry();
+  const detectedCode = (typeof OMD !== 'undefined' && typeof OMD.detectCountry === 'function') 
+    ? OMD.detectCountry() 
+    : 'IN';
   const grid = document.getElementById('helplineGrid');
   const searchInput = document.getElementById('searchInput');
 
@@ -733,7 +738,9 @@
           item.lines.map(l => l.name + ' ' + l.num).join(' ')
         ).toLowerCase();
 
-        matches = fullSearchBlob.includes(q);
+        // Multi-term token search (e.g. "united states", "india 14416", "china beijing")
+        const tokens = q.split(/\s+/).filter(Boolean);
+        matches = tokens.every(token => fullSearchBlob.includes(token));
       }
 
       if (!matches) continue;
@@ -778,6 +785,9 @@
   render();
 
   searchInput.addEventListener('input', (e) => {
+    render(e.target.value);
+  });
+  searchInput.addEventListener('keyup', (e) => {
     render(e.target.value);
   });
 </script>
