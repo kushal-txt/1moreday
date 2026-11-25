@@ -1,4 +1,4 @@
-# OneMoreDay (onemoreday.app)
+# 1MoreDay (1moreday.vercel.app)
 
 > *You are not the only one.*
 
@@ -31,5 +31,5 @@ No hired counselors. No accounts or passwords. No photos or media. Just pure hum
 
 ## Notice
 
-© 2026 OneMoreDay. All rights reserved.  
+© 2026 1MoreDay. All rights reserved.  
 This project and its assets are proprietary. Not authorized for reproduction, public redistribution, or commercial duplication.

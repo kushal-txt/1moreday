@@ -1,4 +1,4 @@
-// OneMoreDay — Client Application Script
+// 1MoreDay — Client Application Script
 // Handles Nickname Generation, Session Persistence, Crisis Detection, Real-Time Messaging, and Safe Text Filters
 
 const RANDOM_NICKNAMES = [
