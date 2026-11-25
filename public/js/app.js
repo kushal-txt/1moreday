@@ -56,20 +56,21 @@ const OMD = {
 
     try {
       // Fetch public configuration from /api/config
-      const res = await fetch('/api/config');
-      const config = await res.json();
+      let config = {};
+      try {
+        const res = await fetch('/api/config');
+        config = await res.json();
+      } catch (e) {}
 
-      if (!config.configured || !config.supabaseUrl || !config.supabaseAnonKey) {
-        console.warn('Supabase credentials not configured in Vercel environment variables.');
-        return null;
-      }
+      const sUrl = (config && config.supabaseUrl) || 'https://lkzvvxcyhxnvlqkgwwvq.supabase.co';
+      const sKey = (config && config.supabaseAnonKey) || 'sb_publishable_BNtaZVraCrwKbJ-udjvuMw_ZY3qRpFV';
 
       if (typeof supabase === 'undefined' || !supabase.createClient) {
         console.error('Supabase JS library not loaded from CDN.');
         return null;
       }
 
-      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+      supabaseClient = supabase.createClient(sUrl, sKey, {
         auth: {
           persistSession: true,
           autoRefreshToken: true
