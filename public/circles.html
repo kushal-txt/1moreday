@@ -91,6 +91,28 @@
     color: var(--text-muted);
     font-size: 13px;
   }
+
+  /* Inline Message Action Buttons */
+  .msg-actions {
+    display: inline-flex;
+    gap: 8px;
+    margin-left: 8px;
+    font-size: 11px;
+  }
+  .btn-action-link {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s;
+  }
+  .btn-action-link:hover { color: var(--text); }
+  .btn-action-link.accent { color: var(--accent); }
+  .btn-action-link.accent:hover { text-decoration: underline; }
+  .btn-action-link.danger:hover { color: var(--danger); }
+
   @media (max-width: 768px) {
     .chat-layout { grid-template-columns: 1fr; }
     .chat-sidebar { display: none; }
@@ -121,7 +143,7 @@
   <div id="crisisAlert" class="crisis-banner" style="display: none;">
     <div class="crisis-text">
       <h4>Need immediate professional support?</h4>
-      <p>If you are in acute distress, free and confidential crisis counselors are standing by in your country right now.</p>
+      <p>If you or someone here is in acute distress or expressing self-harm, free and confidential crisis counselors are standing by in your country right now.</p>
     </div>
     <a href="/helplines" class="btn-coral">View Helplines</a>
   </div>
@@ -129,7 +151,7 @@
   <!-- Chat Layout -->
   <div class="chat-layout">
     
-    <!-- Sidebar: 3 Core Campfires (Concentrated Liquidity) -->
+    <!-- Sidebar: 3 Core Campfires -->
     <div class="chat-sidebar">
       <div class="sidebar-header">24/7 Sanctuaries</div>
       
@@ -138,7 +160,7 @@
           <div class="circle-nav-name">The Overthinking Room</div>
           <div style="font-size: 11px; color: var(--text-muted);">Depression, loneliness, insomnia</div>
         </div>
-        <div class="online-pill" id="count-overthinking">Online</div>
+        <div class="online-pill" id="count-overthinking">Active</div>
       </a>
 
       <a href="javascript:void(0)" class="circle-nav-item" id="tab-heavy-chest" data-room="heavy-chest">
@@ -146,7 +168,7 @@
           <div class="circle-nav-name">The Heavy Chest</div>
           <div style="font-size: 11px; color: var(--text-muted);">Financial stress, debt, job loss</div>
         </div>
-        <div class="online-pill" id="count-heavy-chest">Online</div>
+        <div class="online-pill" id="count-heavy-chest">Active</div>
       </a>
 
       <a href="javascript:void(0)" class="circle-nav-item" id="tab-broken-ties" data-room="broken-ties">
@@ -154,7 +176,7 @@
           <div class="circle-nav-name">Broken Ties</div>
           <div style="font-size: 11px; color: var(--text-muted);">Heartbreak, family estrangement</div>
         </div>
-        <div class="online-pill" id="count-broken-ties">Online</div>
+        <div class="online-pill" id="count-broken-ties">Active</div>
       </a>
 
       <!-- 1-on-1 Quick Action -->
@@ -165,7 +187,7 @@
       </div>
 
       <div style="padding: 16px 20px; margin-top: auto; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); line-height: 1.4;">
-        Capped at 30–50 peers per room so everyone gets heard. Completely text-only. No logs kept.
+        Capped at 30–50 peers per room so everyone gets heard. Completely text-only. Zero database persistence.
       </div>
     </div>
 
@@ -174,7 +196,7 @@
       <div class="chat-header">
         <div>
           <div class="chat-title" id="roomTitle">The Overthinking Room</div>
-          <div class="chat-subtitle" id="roomSubtitle">Capped at 30–50 peers &middot; Ephemeral routing &middot; Zero logs saved</div>
+          <div class="chat-subtitle" id="roomSubtitle">Capped at 30–50 peers &middot; Ephemeral routing &middot; Zero database persistence</div>
         </div>
         <div class="slow-mode-pill">Slow Mode: 5s</div>
       </div>
@@ -186,7 +208,7 @@
       </div>
 
       <div class="chat-input-bar">
-        <input type="text" id="chatInput" class="chat-input" placeholder="Type a reflection... (Links and phone numbers automatically blocked)" maxlength="500">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Type a reflection... (Links and contact info automatically blocked)" maxlength="500">
         <button type="button" id="sendBtn" class="btn-primary" style="padding: 12px 20px;">Send</button>
       </div>
     </div>
@@ -199,7 +221,7 @@
 <div class="invite-modal" id="inviteModal">
   <div class="modal-box">
     <h3 id="modalPeerName">Start a Private 1-on-1</h3>
-    <p id="modalPromptText">Would you like to open a private, encrypted 1-on-1 DM with this peer? Both peers must accept.</p>
+    <p id="modalPromptText">Would you like to open an ephemeral 1-on-1 sanctuary with this peer? Both peers must accept.</p>
     <div class="modal-btns">
       <button class="btn-coral" id="acceptInviteBtn">Accept 1-on-1</button>
       <button class="btn-ghost" id="declineInviteBtn">Decline</button>
@@ -207,8 +229,26 @@
   </div>
 </div>
 
+<!-- Report Peer Modal -->
+<div class="invite-modal" id="reportModal">
+  <div class="modal-box">
+    <h3 style="color:var(--danger);">Report User</h3>
+    <p>Please select a reason for reporting <strong id="reportTargetName">this user</strong>. They will be muted for you immediately.</p>
+    <div style="margin-bottom: 20px; text-align: left; font-size: 12px; color: var(--text);">
+      <label style="display:block; margin-bottom:8px;"><input type="radio" name="reportReason" value="Harmful or abusive speech" checked> Harmful or abusive speech</label>
+      <label style="display:block; margin-bottom:8px;"><input type="radio" name="reportReason" value="Self-harm or suicide intent"> Self-harm or suicide intent</label>
+      <label style="display:block; margin-bottom:8px;"><input type="radio" name="reportReason" value="Predatory or off-platform solicitation"> Asking for off-platform contact</label>
+      <label style="display:block;"><input type="radio" name="reportReason" value="Spam or disruptive behavior"> Spam or disruptive behavior</label>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-danger" id="confirmReportBtn">Submit Report &amp; Mute</button>
+      <button class="btn-ghost" id="cancelReportBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <footer class="footer">
-  <p>1MoreDay &middot; Every conversation is an ephemeral gift. No logs kept.</p>
+  <p>1MoreDay &middot; Every conversation is an ephemeral gift. Zero database persistence.</p>
 </footer>
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
@@ -264,6 +304,9 @@
     if (data.id && renderedMessageIds.has(data.id)) return;
     if (data.id) renderedMessageIds.add(data.id);
 
+    // If author is muted/blocked by user, hide message
+    if (OMD.isBlocked(data.nickname)) return;
+
     // Crisis keyword check
     if (OMD.checkForCrisis(data.text)) {
       crisisAlert.style.display = 'flex';
@@ -280,15 +323,21 @@
     const isSelf = (data.nickname === myName);
     const msgDiv = document.createElement('div');
     msgDiv.className = 'msg ' + (isSelf ? 'self' : 'other');
+    msgDiv.dataset.author = data.nickname;
 
-    const inviteLink = !isSelf
-      ? ` &middot; <a href="javascript:void(0)" style="color:var(--accent); text-decoration:none;" onclick="triggerInvite('${OMD.sanitizeText(data.nickname)}'); return false;">[Invite 1-on-1]</a>`
+    const actionLinks = !isSelf
+      ? ` &middot; 
+          <span class="msg-actions">
+            <button class="btn-action-link accent" onclick="triggerInvite('${OMD.sanitizeText(data.nickname)}')">Invite 1-on-1</button>
+            <button class="btn-action-link" onclick="mutePeer('${OMD.sanitizeText(data.nickname)}')">Mute</button>
+            <button class="btn-action-link danger" onclick="openReportModal('${OMD.sanitizeText(data.nickname)}')">Report</button>
+          </span>`
       : '';
 
     msgDiv.innerHTML = `
       <div class="msg-author">${OMD.sanitizeText(data.nickname)}${isSelf ? ' (You)' : ''}</div>
       <div class="msg-bubble">${OMD.sanitizeText(data.text)}</div>
-      <div class="msg-time">${data.time || OMD.formatTime(new Date())}${inviteLink}</div>
+      <div class="msg-time">${data.time || OMD.formatTime(new Date())}${actionLinks}</div>
     `;
     messagesBox.appendChild(msgDiv);
     messagesBox.scrollTop = messagesBox.scrollHeight;
@@ -368,7 +417,7 @@
       });
     }
 
-    // Also run smooth background polling to ensure zero dropped messages
+    // Background polling for zero dropped messages
     if (pollInterval) clearInterval(pollInterval);
     pollInterval = setInterval(async () => {
       const fresh = await OMD.fetchMessages(channelName, latestMsgTimestamp);
@@ -440,6 +489,7 @@
   };
 
   function showDmInviteReceived(fromPeer, dmId) {
+    if (OMD.isBlocked(fromPeer)) return;
     pendingPeerName = fromPeer;
     pendingDmId = dmId;
 
@@ -454,17 +504,14 @@
     document.getElementById('inviteModal').classList.remove('active');
 
     if (isSending) {
-      // Send invite signal to room
       const channelName = getChannelName(currentRoom);
       await OMD.sendMessage(channelName, '', {
         type: 'dm-invite',
         target: pendingPeerName,
         dmId: pendingDmId
       });
-      // Redirect sender to the DM room
       window.location.href = `/dm?id=${encodeURIComponent(pendingDmId)}&peer=${encodeURIComponent(pendingPeerName)}`;
     } else {
-      // Recipient accepted: join the room
       window.location.href = `/dm?id=${encodeURIComponent(pendingDmId)}&peer=${encodeURIComponent(pendingPeerName)}`;
     }
   });
@@ -476,18 +523,47 @@
   // Direct 1-on-1 room creation
   startDmBtn.addEventListener('click', function() {
     const randomDmId = 'dm-' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-    window.location.href = `/dm?id=${randomDmId}&peer=AwaitingPeer`;
+    window.location.href = `/dm?id=${randomDmId}&peer=Peer`;
   });
 
-  // 7. Initialize Real-Time Layer (Pusher + Fallback)
+  // 7. Muting & Reporting Actions
+  window.mutePeer = function(peer) {
+    if (confirm(`Mute ${peer}? All current and future reflections from ${peer} will be hidden for you.`)) {
+      OMD.blockUser(peer);
+      // Remove visible bubbles from DOM
+      document.querySelectorAll(`[data-author="${peer}"]`).forEach(el => el.remove());
+    }
+  };
+
+  let reportTarget = '';
+  window.openReportModal = function(peer) {
+    reportTarget = peer;
+    document.getElementById('reportTargetName').innerText = peer;
+    document.getElementById('reportModal').classList.add('active');
+  };
+
+  document.getElementById('cancelReportBtn').addEventListener('click', () => {
+    document.getElementById('reportModal').classList.remove('active');
+  });
+
+  document.getElementById('confirmReportBtn').addEventListener('click', async () => {
+    const reason = document.querySelector('input[name="reportReason"]:checked')?.value || 'Inappropriate behavior';
+    document.getElementById('reportModal').classList.remove('active');
+
+    await OMD.reportUser(reportTarget, reason);
+    document.querySelectorAll(`[data-author="${reportTarget}"]`).forEach(el => el.remove());
+    alert(`Thank you. ${reportTarget} has been reported and muted.`);
+  });
+
+  // 8. Initialize Real-Time Layer (Pusher + Fallback)
   const config = await OMD.getConfig();
   if (config.configured && config.pusherKey) {
     pusherInstance = OMD.initPusher(config.pusherKey, config.pusherCluster);
     if (pusherInstance) {
       pusherInstance.connection.bind('connected', () => updateConnStatus('connected', 'Live'));
       pusherInstance.connection.bind('connecting', () => updateConnStatus('connecting', 'Connecting...'));
-      pusherInstance.connection.bind('unavailable', () => updateConnStatus('fallback', 'Active (Fallback)'));
-      pusherInstance.connection.bind('failed', () => updateConnStatus('fallback', 'Active (Fallback)'));
+      pusherInstance.connection.bind('unavailable', () => updateConnStatus('fallback', 'Active'));
+      pusherInstance.connection.bind('failed', () => updateConnStatus('fallback', 'Active'));
     }
   } else {
     updateConnStatus('fallback', 'Active');

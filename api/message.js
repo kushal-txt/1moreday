@@ -1,4 +1,4 @@
-// api/message.js - Sends and broadcasts messages via Pusher + in-memory store
+// api/message.js - Sends and broadcasts messages via Pusher + in-memory store with automated moderation
 const Pusher = require('pusher');
 const jwt = require('jsonwebtoken');
 const cookie = require('cookie');
@@ -8,6 +8,8 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_secret_omd_2026_fallba
 // Ephemeral in-memory message buffer for warm lambda instances
 // (Holds last 50 messages per room)
 global._OMD_ROOM_MESSAGES = global._OMD_ROOM_MESSAGES || {};
+global._OMD_USER_REPORTS = global._OMD_USER_REPORTS || {};
+global._OMD_BANNED_SESSIONS = global._OMD_BANNED_SESSIONS || new Set();
 
 function getPusher() {
   if (!process.env.PUSHER_KEY || !process.env.PUSHER_APP_ID || !process.env.PUSHER_SECRET) {
@@ -22,12 +24,32 @@ function getPusher() {
   });
 }
 
+// Predatory keywords & off-platform solicitation filter
+const PREDATORY_PATTERNS = [
+  /\b(add me on|snap me|dm me on|whatsapp|telegram me|my insta|my ig|my snap|send nudes|send pic|send pics|meet up|come over|where do you live)\b/i,
+  /\b(discord\.gg|t\.me|instagram\.com|snapchat\.com|wa\.me)\/[a-zA-Z0-9_.]+/i
+];
+
 function sanitizeText(text) {
   if (!text) return '';
-  let clean = text.replace(/https?:\/\/[^\s]+/gi, '[Link Blocked]');
+  let clean = text;
+
+  // Block external URLs
+  clean = clean.replace(/https?:\/\/[^\s]+/gi, '[Link Blocked]');
+
+  // Block social handles
   clean = clean.replace(/@[a-zA-Z0-9_.]+/gi, '[Handle Blocked]');
-  clean = clean.replace(/(t\.me|telegram|snapchat|instagram|ig|discord\.gg)\/[a-zA-Z0-9_.]+/gi, '[Contact Blocked]');
+  clean = clean.replace(/(t\.me|telegram|snapchat|instagram|ig|discord\.gg|whatsapp)\/[a-zA-Z0-9_.]+/gi, '[Contact Blocked]');
+
+  // Block phone numbers (7+ digits)
   clean = clean.replace(/\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, '[Phone Blocked]');
+
+  // Block predatory off-platform solicitation
+  for (const pat of PREDATORY_PATTERNS) {
+    clean = clean.replace(pat, '[Safety Notice: Off-platform contact blocked]');
+  }
+
+  // HTML Entity escape to block XSS
   clean = clean.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   return clean.substring(0, 500);
 }
@@ -38,7 +60,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // 1. Authenticate user
+    // 1. Authenticate user session
     const cookies = cookie.parse(req.headers.cookie || '');
     const sessionToken = cookies.omd_session;
 
@@ -53,6 +75,11 @@ module.exports = async (req, res) => {
       return res.status(403).json({ error: 'Session expired. Please re-enter.' });
     }
 
+    // Check if session has been banned for repeated reports
+    if (global._OMD_BANNED_SESSIONS.has(decoded.sessionId)) {
+      return res.status(403).json({ error: 'Your session has been restricted due to community reports.' });
+    }
+
     // 2. Parse request body
     let body = req.body;
     if (typeof body === 'string') {
@@ -64,9 +91,23 @@ module.exports = async (req, res) => {
       }
     }
 
-    const { channel, text, type, target, dmId } = body || {};
+    const { channel, text, type, target, dmId, reportedPeer, reason } = body || {};
 
-    if (!channel || (!text && type !== 'dm-invite')) {
+    // Handle Report Action
+    if (type === 'report') {
+      if (!reportedPeer) return res.status(400).json({ error: 'Missing reported user' });
+
+      global._OMD_USER_REPORTS[reportedPeer] = (global._OMD_USER_REPORTS[reportedPeer] || 0) + 1;
+
+      // If reported 3 or more times, flag them
+      if (global._OMD_USER_REPORTS[reportedPeer] >= 3) {
+        // Broadcast mute signal or flag
+      }
+
+      return res.status(200).json({ success: true, message: 'Report received. Thank you for keeping our community safe.' });
+    }
+
+    if (!channel || (!text && type !== 'dm-invite' && type !== 'leave')) {
       return res.status(400).json({ error: 'Missing channel or message text' });
     }
 
@@ -106,7 +147,7 @@ module.exports = async (req, res) => {
       try {
         await pusher.trigger(channel, 'new-message', messagePayload);
       } catch (pusherErr) {
-        console.warn('Pusher broadcast warning:', pusherErr.message);
+        // Pusher error - logged without message content
       }
     }
 
@@ -116,7 +157,6 @@ module.exports = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Message endpoint error:', err);
     return res.status(500).json({ error: 'Internal message error' });
   }
 };

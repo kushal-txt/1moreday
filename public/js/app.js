@@ -1,5 +1,5 @@
 // 1MoreDay — Client Application Script
-// Handles Nickname Generation, Session Persistence, Crisis Detection, Real-Time Messaging, and Safe Text Filters
+// Handles Nickname Generation, Session Persistence, Crisis Detection, Real-Time Messaging, Muting & Reporting
 
 const RANDOM_NICKNAMES = [
   'SilentPebble', 'EveningBreeze', 'QuietRiver', 'WanderingEcho',
@@ -18,7 +18,8 @@ const CRISIS_KEYWORDS = [
   'cutting myself', 'self harm', 'hang myself', 'no reason to live',
   'jump off', 'overdose', 'pills to die', 'slit my wrist',
   'better off dead', 'nobody would miss me', 'can not go on',
-  'cannot go on', 'end it all', 'die tonight', 'kill me'
+  'cannot go on', 'end it all', 'die tonight', 'kill me',
+  'hurt myself', 'bleeding out', 'take my life'
 ];
 
 const OMD = {
@@ -45,14 +46,64 @@ const OMD = {
     return `${RANDOM_NICKNAMES[index]}${suffix}`;
   },
 
+  // --- Client-Side Mute / Block System ---
+  getBlockedUsers() {
+    try {
+      return JSON.parse(localStorage.getItem('omd_blocked_users') || '[]');
+    } catch (e) {
+      return [];
+    }
+  },
+
+  blockUser(nickname) {
+    if (!nickname) return;
+    const list = this.getBlockedUsers();
+    if (!list.includes(nickname)) {
+      list.push(nickname);
+      localStorage.setItem('omd_blocked_users', JSON.stringify(list));
+    }
+  },
+
+  unblockUser(nickname) {
+    let list = this.getBlockedUsers();
+    list = list.filter(u => u !== nickname);
+    localStorage.setItem('omd_blocked_users', JSON.stringify(list));
+  },
+
+  isBlocked(nickname) {
+    if (!nickname) return false;
+    return this.getBlockedUsers().includes(nickname);
+  },
+
+  // --- User Report Action ---
+  async reportUser(reportedPeer, reason = 'Inappropriate behavior') {
+    try {
+      // First block locally so the user is immediately protected
+      this.blockUser(reportedPeer);
+
+      const res = await fetch('/api/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'report',
+          reportedPeer,
+          reason
+        }),
+        credentials: 'same-origin'
+      });
+      return await res.json();
+    } catch (e) {
+      return { success: false };
+    }
+  },
+
   // --- Content Safety ---
   sanitizeText(text) {
     if (!text) return '';
     let clean = text.replace(/https?:\/\/[^\s]+/gi, '[Link Blocked]');
     clean = clean.replace(/@[a-zA-Z0-9_.]+/gi, '[Handle Blocked]');
-    clean = clean.replace(/(t\.me|telegram|snapchat|instagram|ig|discord\.gg)\/[a-zA-Z0-9_.]+/gi, '[Contact Blocked]');
+    clean = clean.replace(/(t\.me|telegram|snapchat|instagram|ig|discord\.gg|whatsapp)\/[a-zA-Z0-9_.]+/gi, '[Contact Blocked]');
     clean = clean.replace(/\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, '[Phone Blocked]');
-    // Escape HTML to prevent XSS
     clean = clean.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     return clean;
   },
@@ -110,7 +161,6 @@ const OMD = {
       });
       return await res.json();
     } catch (e) {
-      console.error('Send message error:', e);
       return { error: 'Failed to send' };
     }
   },
@@ -143,7 +193,6 @@ const OMD = {
       });
       return pusher;
     } catch (e) {
-      console.warn('Pusher init failed:', e);
       return null;
     }
   },
@@ -229,7 +278,7 @@ const OMD = {
       if (tz.includes('Nairobi')) return 'KE';
       if (tz.includes('Accra')) return 'GH';
 
-      // Broad fallbacks
+      // Fallbacks
       if (tz.includes('America/')) return 'US';
       if (tz.includes('Europe/')) return 'GB';
       if (tz.includes('Asia/')) return 'IN';
