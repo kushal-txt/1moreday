@@ -1,59 +1,58 @@
-# 1MoreDay (1moreday.vercel.app)
+<div align="center">
 
-> *You are not the only one.*
+# 1MoreDay
 
-An anonymous, strictly gender-neutral, text-only peer support sanctuary connecting people carrying life burdens (depression, financial stress, relationship heartbreak, family conflict).
+**An anonymous, gender-neutral, text-only peer support sanctuary.**
 
-No hired counselors. No accounts or passwords. No photos or media. Just pure human solidarity.
-
----
-
-## The Sanctuary Principles
-
-1. **No Accounts Required:** Users enter with an anonymous handle. No passwords, emails, or phone numbers.
-2. **Strictly Gender-Neutral:** Strips away demographics and pronouns to focus 100% on the burden and eliminate dating dynamics.
-3. **100% Text-Only:** Eliminates NSFW/graphic abuse and maintains pure conversational focus.
-4. **24/7 Campfire Circles:** Small group support rooms capped at 10 peers to preserve intimacy.
-5. **Random 1-on-1 Pairing:** Single-click matchmaking pairs you with the next anonymous peer waiting to talk. Zero choosing strangers.
-6. **24-Hour Auto-Delete:** Messages automatically delete after 24 hours. Zero permanent archives.
-7. **Crisis Intervention First:** Immediate Tele-MANAS (14416) crisis card for Indian users, plus 50+ country crisis directories.
+[Visit 1MoreDay](https://1moreday.vercel.app) · [Campfire Circles](https://1moreday.vercel.app/circles) · [1-on-1 Sanctuary](https://1moreday.vercel.app/dm) · [Global Helplines](https://1moreday.vercel.app/helplines)
 
 ---
 
-## Supabase Database Setup
+*"You are not the only one."*
 
-1. Create a free project on **[supabase.com](https://supabase.com)**.
-2. In your Supabase project dashboard, open the **SQL Editor** (left sidebar).
-3. Paste the contents of [`supabase/schema.sql`](supabase/schema.sql) and click **Run**.
-4. In Supabase **Project Settings** &rarr; **API**, copy:
-   * **Project URL**
-   * **anon public key**
+</div>
 
----
+## Overview
 
-## Required Environment Variables (Vercel)
+**1MoreDay** is a quiet, text-only space for people carrying heavy life burdens—loneliness, grief, anxiety, heartbreak, and quiet exhaustion. 
 
-Add these in your Vercel Project Settings under **Settings** &rarr; **Environment Variables**:
-
-| Variable Name | Description | Example |
-| :--- | :--- | :--- |
-| `SUPABASE_URL` | Your Supabase Project URL | `https://your-project.supabase.co` |
-| `SUPABASE_ANON_KEY` | Your Supabase `anon` `public` key | `eyJhbGciOi...` |
-
-*(Note: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are also accepted).*
+There are no counselors, no accounts, and no social feeds. Just two or more human beings holding space for one another in real time, without judgment or expectations.
 
 ---
 
-## Architecture
+## The Experience
 
-* **Frontend:** Zero-border-radius dark editorial interface (`#0A0D12`).
-* **Database:** Supabase PostgreSQL with Row Level Security (RLS) and 24-hour expiration filter.
-* **Realtime Layer:** Supabase Realtime (PostgreSQL Changes & Presence) for sub-50ms message delivery and true online presence counts.
-* **Auth:** Anonymous Supabase authentication (`signInAnonymously`). Zero email, password, or demographic tracking.
+* **Campfire Circles**  
+  Small, real-time shared rooms capped at 10 people to preserve intimacy. Share what is on your mind and listen to others around the same fire.
+
+* **1-on-1 Sanctuaries**  
+  Random peer matching. Click once to be paired anonymously with someone else waiting to talk. No profiles to browse, no choosing strangers.
+
+* **Global Helpline Directory**  
+  Immediate access to verified crisis hotlines across 50+ countries, including Tele-MANAS, KIRAN, and international emergency networks.
+
+---
+
+## Core Rules
+
+1. **No Accounts** &mdash; No signups, passwords, emails, or personal data. You enter with an ephemeral alias.
+2. **Strictly Gender-Neutral** &mdash; No pronouns, gender indicators, or dating dynamics. The focus remains entirely on human empathy.
+3. **100% Text-Only** &mdash; No images, audio, or media. Words only.
+4. **24-Hour Dissolution** &mdash; All conversations automatically erase after 24 hours. Zero permanent archives.
+5. **No Solicitation** &mdash; External social handles, phone numbers, and off-platform links are strictly filtered.
+
+---
+
+## Crisis Support
+
+If you or someone you know is in immediate danger or considering self-harm, please reach out to professional emergency services:
+
+* **India:** Tele-MANAS at `14416` or `1800-891-4416` · Emergency `112`
+* **Worldwide:** [findahelpline.com](https://findahelpline.com) or your local emergency number (`988` in US/Canada, `111`/`999` in UK, `120` in China)
 
 ---
 
 ## Notice
 
 © 2026 1MoreDay. All rights reserved.  
-This project and its assets are proprietary. Not authorized for reproduction, public redistribution, or commercial duplication.
+Built for compassion, privacy, and human connection.
