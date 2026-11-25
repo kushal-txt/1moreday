@@ -6,6 +6,7 @@
 <title>OneMoreDay — Anonymous Peer Support Network</title>
 <link rel="stylesheet" href="/css/style.css">
 <style>
+  html { scroll-behavior: smooth; }
   .hero-grid {
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
@@ -16,7 +17,7 @@
   .hero-art img {
     width: 100%;
     border: 1px solid var(--border);
-    background: var(--surface);
+    background: var(--bg);
     display: block;
   }
   .hero-tag {
@@ -84,6 +85,11 @@
     max-width: 500px;
     margin: 0 auto 80px;
     text-align: center;
+    transition: box-shadow 0.3s, border-color 0.3s;
+  }
+  .entry-box.focused {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(91, 141, 239, 0.2);
   }
   .entry-box h2 {
     font-size: 22px;
@@ -120,6 +126,18 @@
     margin-bottom: 24px;
   }
   .agreement-row input { margin-top: 3px; }
+
+  @media (max-width: 768px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 30px; }
+    .hero-h1 { font-size: 36px; }
+    .rules-grid { grid-template-columns: 1fr 1fr; }
+    .rule-card:nth-child(2) { border-right: none; }
+  }
+  @media (max-width: 480px) {
+    .rules-grid { grid-template-columns: 1fr; }
+    .rule-card { border-right: none; border-bottom: 1px solid var(--border); }
+    .rule-card:last-child { border-bottom: none; }
+  }
 </style>
 </head>
 <body>
@@ -132,7 +150,7 @@
   <nav class="nav-links">
     <a href="/circles">Campfire Circles</a>
     <a href="/helplines">Global Helplines</a>
-    <a href="/#entry">Join Now</a>
+    <a href="#entry" id="navJoinBtn" class="btn-primary" style="padding: 8px 16px; font-size: 12px;">Join Now</a>
   </nav>
 </header>
 
@@ -146,13 +164,13 @@
       <p class="hero-desc">
         Connect in real-time with people carrying the exact same life burden. No hired counselors, no social feeds, no judgment. Just pure human solidarity.
       </p>
-      <div style="display: flex; gap: 14px;">
-        <a href="#entry" class="btn-primary">Enter A Campfire</a>
+      <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+        <a href="#entry" id="heroEnterBtn" class="btn-primary">Enter A Campfire</a>
         <a href="/helplines" class="btn-ghost">Crisis Helplines</a>
       </div>
     </div>
     <div class="hero-art">
-      <img src="/illustrations/hero-support.jpg" alt="Abstract figures in supportive listening posture">
+      <img src="/illustrations/hero-support.jpg" alt="Abstract figures in supportive listening posture on dark background">
     </div>
   </section>
 
@@ -180,13 +198,13 @@
     </div>
   </section>
 
-  <!-- Step 1: Entry Box -->
+  <!-- Entry Box -->
   <section id="entry" class="entry-box">
     <h2>Who are you today?</h2>
     <p>Choose an anonymous nickname. Valid only for this session.</p>
     
     <div class="name-row">
-      <input type="text" id="nicknameInput" class="chat-input" placeholder="e.g. QuietOak" style="background: var(--bg);">
+      <input type="text" id="nicknameInput" class="chat-input" placeholder="e.g. QuietOak" style="background: var(--bg);" maxlength="20">
       <button type="button" id="genBtn" class="btn-gen">GEN</button>
     </div>
 
@@ -214,6 +232,9 @@
   const genBtn = document.getElementById('genBtn');
   const enterBtn = document.getElementById('enterBtn');
   const agreeCheck = document.getElementById('agreeCheck');
+  const navJoinBtn = document.getElementById('navJoinBtn');
+  const heroEnterBtn = document.getElementById('heroEnterBtn');
+  const entryBox = document.getElementById('entry');
 
   // Pre-fill or generate random name
   const existing = OMD.getSession();
@@ -223,15 +244,48 @@
     input.value = OMD.generateRandomName();
   });
 
-  enterBtn.addEventListener('click', () => {
+  async function handleEnter() {
     if (!agreeCheck.checked) {
       alert('Please agree to the community rules to proceed.');
       return;
     }
     const name = input.value.trim() || OMD.generateRandomName();
     OMD.setSession(name);
+    enterBtn.textContent = 'Entering...';
+    enterBtn.disabled = true;
+
+    // Mint server session
+    await OMD.createServerSession(name);
     window.location.href = '/circles';
+  }
+
+  enterBtn.addEventListener('click', handleEnter);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleEnter();
   });
+
+  // "Join Now" and "Enter A Campfire" smart action:
+  // If user already has nickname, enter directly; otherwise smoothly scroll & focus input
+  function handleJoinClick(e) {
+    e.preventDefault();
+    const stored = OMD.getSession();
+    if (stored) {
+      window.location.href = '/circles';
+    } else {
+      entryBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      entryBox.classList.add('focused');
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 500);
+      setTimeout(() => {
+        entryBox.classList.remove('focused');
+      }, 2500);
+    }
+  }
+
+  navJoinBtn.addEventListener('click', handleJoinClick);
+  heroEnterBtn.addEventListener('click', handleJoinClick);
 </script>
 
 </body>

@@ -5,13 +5,18 @@ const cookie = require('cookie');
 
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_secret_omd_2026_fallback';
 
-const pusher = new Pusher({
-  appId: process.env.PUSHER_APP_ID || 'dummy_app_id',
-  key: process.env.PUSHER_KEY || 'dummy_key',
-  secret: process.env.PUSHER_SECRET || 'dummy_secret',
-  cluster: process.env.PUSHER_CLUSTER || 'mt1',
-  useTLS: true
-});
+function getPusher() {
+  if (!process.env.PUSHER_KEY || !process.env.PUSHER_APP_ID || !process.env.PUSHER_SECRET) {
+    return null;
+  }
+  return new Pusher({
+    appId: process.env.PUSHER_APP_ID,
+    key: process.env.PUSHER_KEY,
+    secret: process.env.PUSHER_SECRET,
+    cluster: process.env.PUSHER_CLUSTER || 'mt1',
+    useTLS: true
+  });
+}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -34,16 +39,38 @@ module.exports = async (req, res) => {
       return res.status(403).json({ error: 'Invalid or expired session' });
     }
 
-    const { socket_id, channel_name } = req.body;
+    // 2. Parse body (supports JSON and urlencoded)
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        const querystring = require('querystring');
+        body = querystring.parse(body);
+      }
+    }
+
+    const socket_id = body.socket_id;
+    const channel_name = body.channel_name;
 
     if (!socket_id || !channel_name) {
       return res.status(400).json({ error: 'Missing socket_id or channel_name' });
     }
 
-    // 2. Channel Authorization Rules (Anti-IDOR Guard)
+    const pusher = getPusher();
+    if (!pusher) {
+      return res.status(503).json({ error: 'Pusher is not configured on server' });
+    }
+
+    // 3. Channel Authorization Rules (Anti-IDOR Guard)
     
     // A) Presence Circles (24/7 Group Campfires)
     if (channel_name.startsWith('presence-circle-')) {
+      const allowedRooms = ['presence-circle-overthinking', 'presence-circle-heavy-chest', 'presence-circle-broken-ties'];
+      if (!allowedRooms.includes(channel_name)) {
+        return res.status(403).json({ error: 'Invalid campfire room' });
+      }
+
       const presenceData = {
         user_id: decoded.sessionId,
         user_info: {
@@ -56,13 +83,15 @@ module.exports = async (req, res) => {
 
     // B) Private 1-on-1 DMs (Strict anti-IDOR authorization)
     if (channel_name.startsWith('private-dm-')) {
-      // Tokenized channel format: private-dm-[roomId]
-      // In production, verify that decoded.sessionId is authorized for this specific roomId
+      // Validate channel name format: private-dm-[alphanumeric_-]{8,64}
+      if (!/^private-dm-[a-zA-Z0-9_-]{6,64}$/.test(channel_name)) {
+        return res.status(403).json({ error: 'Invalid DM room identifier' });
+      }
+
       const auth = pusher.authorizeChannel(socket_id, channel_name);
       return res.send(auth);
     }
 
-    // Unknown channel prefix
     return res.status(403).json({ error: 'Unauthorized channel type' });
 
   } catch (err) {

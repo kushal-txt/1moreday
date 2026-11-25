@@ -13,10 +13,10 @@ No hired counselors. No accounts or passwords. No photos or media. Just pure hum
 1. **No Accounts Required:** Users enter with a single anonymous session handle. No passwords, emails, or phone numbers.
 2. **Strictly Gender-Neutral:** Strips away demographics and pronouns to focus 100% on the burden and eliminate dating dynamics.
 3. **100% Text-Only:** Eliminates 100% of NSFW/graphic abuse and maintains pure conversational focus.
-4. **24/7 Campfire Circles:** Small group support rooms capped at 10 peers to preserve intimacy.
+4. **24/7 Campfire Circles:** Peer support rooms capped at 30–50 peers to ensure everyone gets attention and support.
 5. **Private 1-on-1 Encounters:** Mutual-consent private DMs. Zero unsolicited messages.
 6. **Stateless Anti-IDOR Security:** Cryptographic session tokens, unguessable room UUIDs, and ephemeral in-memory message routing. Zero database logging.
-7. **Global Helpline Directory:** Immediate, tap-to-dial access to free, 24/7 crisis lines across 40+ countries.
+7. **Global Helpline Directory:** Immediate, tap-to-dial access to free, 24/7 crisis lines across 50+ countries plus universal international resources.
 
 ---
 

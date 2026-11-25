@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Global Helplines Directory — OneMoreDay</title>
+<title>Global Crisis Helplines Directory — OneMoreDay</title>
 <link rel="stylesheet" href="/css/style.css">
 <style>
   .search-bar {
@@ -13,14 +13,68 @@
     color: var(--text);
     padding: 16px 20px;
     font-size: 15px;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
     outline: none;
+    transition: border-color 0.2s;
   }
   .search-bar:focus { border-color: var(--accent); }
 
+  /* Worldwide Top Banner */
+  .worldwide-banner {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    padding: 24px 30px;
+    margin-bottom: 30px;
+  }
+  .worldwide-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .worldwide-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .worldwide-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .ww-link-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .ww-link-item:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .ww-link-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .ww-link-val {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
   .helpline-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 20px;
     margin-bottom: 60px;
   }
@@ -60,11 +114,12 @@
   }
 
   .line-item {
-    padding: 8px 0;
+    padding: 9px 0;
     border-top: 1px solid var(--border-subtle);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
   }
   .line-name {
     font-size: 13px;
@@ -76,8 +131,20 @@
     color: var(--accent);
     text-decoration: none;
     letter-spacing: 0.5px;
+    text-align: right;
+    white-space: nowrap;
   }
   .line-num:hover { text-decoration: underline; }
+
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
 </style>
 </head>
 <body>
@@ -96,115 +163,537 @@
 
 <div class="container">
 
-  <div style="margin-bottom: 30px;">
+  <div style="margin-bottom: 24px;">
     <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">Global Crisis Helplines</h1>
     <p style="color: var(--text-muted); font-size: 15px;">
-      Free, confidential, 24/7 crisis hotlines across 40+ countries. Click any number to dial immediately.
+      Free, confidential, 24/7 crisis hotlines across 50+ countries. Click any number to dial immediately.
     </p>
   </div>
 
-  <input type="text" id="searchInput" class="search-bar" placeholder="Type a country name (e.g. India, United States, United Kingdom, Canada)...">
+  <!-- Universal Worldwide Support Banner -->
+  <div class="worldwide-banner">
+    <div class="worldwide-title">
+      Universal &amp; International Crisis Resources
+    </div>
+    <div class="worldwide-desc">
+      If you are traveling, unable to find your country below, or need international emergency assistance, these verified resources offer global coverage 24/7:
+    </div>
+    <div class="worldwide-links">
+      <a href="https://findahelpline.com" target="_blank" rel="noopener" class="ww-link-item">
+        <span class="ww-link-label">Find A Helpline (175+ Countries)</span>
+        <span class="ww-link-val">findahelpline.com &rarr;</span>
+      </a>
+      <a href="https://www.befrienders.org" target="_blank" rel="noopener" class="ww-link-item">
+        <span class="ww-link-label">Befrienders Worldwide</span>
+        <span class="ww-link-val">befrienders.org &rarr;</span>
+      </a>
+      <a href="https://www.iasp.info/resources/Crisis_Centres/" target="_blank" rel="noopener" class="ww-link-item">
+        <span class="ww-link-label">IASP International Centers</span>
+        <span class="ww-link-val">iasp.info &rarr;</span>
+      </a>
+      <a href="tel:112" class="ww-link-item">
+        <span class="ww-link-label">Global Emergency Number</span>
+        <span class="ww-link-val">112 (GSM Standard) &rarr;</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Search Input -->
+  <input type="text" id="searchInput" class="search-bar" placeholder="Search by country, city, organization, or number (e.g. China, Beijing, India, 988, 120, 112)...">
 
   <div class="helpline-grid" id="helplineGrid">
-    <!-- Populated via JavaScript with auto-detected country at top -->
+    <!-- Populated via JavaScript with auto-detected country first -->
   </div>
 
 </div>
 
 <footer class="footer">
-  <p>If your country is not listed, visit <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a> for immediate local care.</p>
+  <p>If your country is not listed, visit <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a> for verified local care in 175+ nations.</p>
 </footer>
 
 <script src="/js/app.js"></script>
 <script>
   const HELPLINES = [
+    // --- EAST ASIA ---
     {
-      code: 'IN',
-      country: 'India',
+      code: 'CN', country: 'China (中国)',
+      keywords: 'china beijing shanghai shenzhen guangzhou 400 120 110 lifeline',
       lines: [
-        { name: 'Tele-MANAS', num: '14416', tel: '14416' },
-        { name: 'KIRAN Helpline', num: '1800-599-0019', tel: '18005990019' },
-        { name: 'Vandrevala Foundation', num: '+91 9999 666 555', tel: '+919999666555' },
-        { name: 'Emergency', num: '112', tel: '112' }
+        { name: 'Beijing Crisis Research Center (24/7)', num: '010-82951332', tel: '01082951332' },
+        { name: 'Beijing Toll-Free Crisis Line', num: '800-810-1117', tel: '8008101117' },
+        { name: 'China National Crisis Hotline (24/7)', num: '400-161-9995', tel: '4001619995' },
+        { name: 'Lifeline China (Shanghai, EN/ZH)', num: '400-821-1215', tel: '4008211215' },
+        { name: 'Shenzhen Psychological Crisis Line', num: '0755-25629441', tel: '075525629441' },
+        { name: 'Guangzhou Assistance Hotline', num: '020-81899120', tel: '02081899120' },
+        { name: 'Emergency (Ambulance)', num: '120', tel: '120' },
+        { name: 'Emergency (Police)', num: '110', tel: '110' }
       ]
     },
     {
-      code: 'US',
-      country: 'United States',
+      code: 'JP', country: 'Japan (日本)',
+      keywords: 'japan tokyo tell inochi 119 110',
       lines: [
-        { name: '988 Suicide & Crisis Lifeline', num: '988', tel: '988' },
-        { name: 'Crisis Text Line', num: 'Text HOME to 741741', tel: '741741' },
-        { name: 'Emergency', num: '911', tel: '911' }
+        { name: 'TELL Lifeline (English & Japanese)', num: '0800 300 8395', tel: '08003008395' },
+        { name: 'Inochi no Denwa (Toll-free)', num: '0120 783 556', tel: '0120783556' },
+        { name: 'Inochi no Denwa (Navidial)', num: '0570 783 556', tel: '0570783556' },
+        { name: 'Emergency (Ambulance)', num: '119', tel: '119' },
+        { name: 'Emergency (Police)', num: '110', tel: '110' }
       ]
     },
     {
-      code: 'GB',
-      country: 'United Kingdom',
+      code: 'KR', country: 'South Korea (대한민국)',
+      keywords: 'korea seoul 109 1393 119',
       lines: [
-        { name: 'Samaritans', num: '116 123', tel: '116123' },
-        { name: 'Shout Crisis Text Line', num: 'Text SHOUT to 85258', tel: '85258' },
-        { name: 'NHS Mental Health', num: '111', tel: '111' },
+        { name: 'National Crisis Line (24/7)', num: '109', tel: '109' },
+        { name: 'Suicide Prevention Hotline', num: '1393', tel: '1393' },
+        { name: 'Mental Health Center Line', num: '1577-0199', tel: '15770199' },
+        { name: 'Emergency (Ambulance/Fire)', num: '119', tel: '119' },
+        { name: 'Emergency (Police)', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'TW', country: 'Taiwan (台灣)',
+      keywords: 'taiwan taipei 1925 1995 119',
+      lines: [
+        { name: 'Ministry of Health Reassurance', num: '1925', tel: '1925' },
+        { name: 'Lifeline Taiwan', num: '1995', tel: '1995' },
+        { name: 'Emergency', num: '119', tel: '119' }
+      ]
+    },
+    {
+      code: 'HK', country: 'Hong Kong (香港)',
+      keywords: 'hong kong 999 samaritans 2389',
+      lines: [
+        { name: 'Samaritans Hong Kong (Multi-lang)', num: '2389 2222', tel: '23892222' },
+        { name: 'Suicide Prevention Services', num: '2382 0000', tel: '23820000' },
+        { name: 'Emergency', num: '999', tel: '999' }
+      ]
+    },
+
+    // --- SOUTH ASIA ---
+    {
+      code: 'IN', country: 'India',
+      keywords: 'india tele-manas kiran vandrevala aasra icall delhi mumbai bangalore 14416 112',
+      lines: [
+        { name: 'Tele-MANAS (24/7, Multi-lang)', num: '14416', tel: '14416' },
+        { name: 'Tele-MANAS Toll-Free', num: '1800-891-4416', tel: '18008914416' },
+        { name: 'KIRAN Mental Health (Free)', num: '1800-599-0019', tel: '18005990019' },
+        { name: 'Vandrevala Foundation (24/7)', num: '+91 9999 666 555', tel: '+919999666555' },
+        { name: 'Aasra (24/7)', num: '+91 98204 66728', tel: '+919820466728' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'PK', country: 'Pakistan',
+      keywords: 'pakistan taskeen umang karachi lahore 15 115',
+      lines: [
+        { name: 'Taskeen Emotional Support', num: '0316 5647939', tel: '03165647939' },
+        { name: 'Umang Pakistan (24/7)', num: '0311 7786264', tel: '03117786264' },
+        { name: 'Emergency (Police)', num: '15', tel: '15' },
+        { name: 'Emergency (Ambulance)', num: '115', tel: '115' }
+      ]
+    },
+    {
+      code: 'BD', country: 'Bangladesh',
+      keywords: 'bangladesh dhaka kaan pete roi 999',
+      lines: [
+        { name: 'Kaan Pete Roi', num: '01779 554391', tel: '01779554391' },
+        { name: 'Moner Bondhu', num: '01776 632344', tel: '01776632344' },
+        { name: 'National Emergency', num: '999', tel: '999' }
+      ]
+    },
+    {
+      code: 'LK', country: 'Sri Lanka',
+      keywords: 'sri lanka colombo sumithrayo 119',
+      lines: [
+        { name: 'Sumithrayo (24/7)', num: '+94 11 269 6666', tel: '+94112696666' },
+        { name: 'CCCline (Toll-Free)', num: '1333', tel: '1333' },
+        { name: 'National Emergency', num: '119', tel: '119' }
+      ]
+    },
+
+    // --- SOUTHEAST ASIA ---
+    {
+      code: 'SG', country: 'Singapore',
+      keywords: 'singapore samaritans sos imh 1767 995',
+      lines: [
+        { name: 'Samaritans of Singapore (SOS, 24/7)', num: '1-767', tel: '1767' },
+        { name: 'IMH Mental Health (24/7)', num: '6389 2222', tel: '63892222' },
+        { name: 'Emergency', num: '995', tel: '995' }
+      ]
+    },
+    {
+      code: 'MY', country: 'Malaysia',
+      keywords: 'malaysia kuala lumpur befrienders 999',
+      lines: [
+        { name: 'Befrienders KL (24/7)', num: '+603 7627 2929', tel: '+60376272929' },
+        { name: 'Talian Kasih', num: '15999', tel: '15999' },
         { name: 'Emergency', num: '999', tel: '999' }
       ]
     },
     {
-      code: 'CA',
-      country: 'Canada',
+      code: 'PH', country: 'Philippines',
+      keywords: 'philippines manila ncmh in touch 1553 911',
       lines: [
-        { name: 'Suicide Crisis Helpline', num: '988', tel: '988' },
-        { name: 'Crisis Services Canada', num: '1-833-456-4566', tel: '18334564566' },
+        { name: 'NCMH Crisis Line (Toll-free)', num: '1553', tel: '1553' },
+        { name: 'NCMH Mobile (Globe)', num: '0966-351-4518', tel: '09663514518' },
+        { name: 'In Touch Community Services', num: '+63 2 8893 7603', tel: '+63288937603' },
         { name: 'Emergency', num: '911', tel: '911' }
       ]
     },
     {
-      code: 'AU',
-      country: 'Australia',
+      code: 'TH', country: 'Thailand',
+      keywords: 'thailand bangkok samaritans 1323 191',
       lines: [
-        { name: 'Lifeline Australia', num: '13 11 14', tel: '131114' },
-        { name: 'Beyond Blue', num: '1300 22 4636', tel: '1300224636' },
-        { name: 'Emergency', num: '000', tel: '000' }
+        { name: 'Mental Health Department Line', num: '1323', tel: '1323' },
+        { name: 'Samaritans of Thailand', num: '02-713-6793', tel: '027136793' },
+        { name: 'Emergency', num: '191', tel: '191' }
       ]
     },
     {
-      code: 'NZ',
-      country: 'New Zealand',
+      code: 'ID', country: 'Indonesia',
+      keywords: 'indonesia jakarta into the light sejiwa 112 119',
       lines: [
-        { name: 'Lifeline NZ', num: '0800 543 354', tel: '0800543354' },
-        { name: 'Need to Talk?', num: '1737', tel: '1737' },
-        { name: 'Emergency', num: '111', tel: '111' }
+        { name: 'Kemenkes Sejiwa Hotline', num: '119 ext. 8', tel: '119' },
+        { name: 'Emergency Services', num: '112', tel: '112' }
+      ]
+    },
+
+    // --- NORTH AMERICA ---
+    {
+      code: 'US', country: 'United States',
+      keywords: 'united states usa america 988 911 741741 crisis text line suicide lifeline',
+      lines: [
+        { name: '988 Suicide & Crisis Lifeline (Call/Text)', num: '988', tel: '988' },
+        { name: 'Crisis Text Line', num: 'Text HOME to 741741', tel: '741741' },
+        { name: 'Veterans Crisis Line', num: 'Dial 988, Press 1', tel: '988' },
+        { name: 'The Trevor Project (LGBTQ)', num: '1-866-488-7386', tel: '18664887386' },
+        { name: 'National Emergency', num: '911', tel: '911' }
       ]
     },
     {
-      code: 'DE',
-      country: 'Germany',
+      code: 'CA', country: 'Canada',
+      keywords: 'canada 988 911 toronto vancouver montreal kids help phone',
       lines: [
-        { name: 'TelefonSeelsorge', num: '0800 111 0 111', tel: '08001110111' },
-        { name: 'Emergency', num: '112', tel: '112' }
+        { name: 'Suicide Crisis Helpline (Call/Text)', num: '988', tel: '988' },
+        { name: 'Crisis Services Canada', num: '1-833-456-4566', tel: '18334564566' },
+        { name: 'Kids Help Phone', num: '1-800-668-6868', tel: '18006686868' },
+        { name: 'National Emergency', num: '911', tel: '911' }
       ]
     },
     {
-      code: 'FR',
-      country: 'France',
+      code: 'MX', country: 'Mexico (México)',
+      keywords: 'mexico linea de la vida 800 911',
       lines: [
-        { name: 'National Crisis Line', num: '3114', tel: '3114' },
-        { name: 'SOS Amitie', num: '+33 1 40 09 15 22', tel: '+33140091522' },
-        { name: 'Emergency', num: '112', tel: '112' }
+        { name: 'Línea de la Vida (24/7)', num: '800 911 2000', tel: '8009112000' },
+        { name: 'SAPTEL Cruz Roja', num: '55 5259 8121', tel: '5552598121' },
+        { name: 'National Emergency', num: '911', tel: '911' }
+      ]
+    },
+
+    // --- EUROPE & UK ---
+    {
+      code: 'GB', country: 'United Kingdom',
+      keywords: 'united kingdom uk england scotland wales samaritans shout calm nhs 111 999 116123',
+      lines: [
+        { name: 'Samaritans (Free, 24/7)', num: '116 123', tel: '116123' },
+        { name: 'Shout Crisis Text Line', num: 'Text SHOUT to 85258', tel: '85258' },
+        { name: 'NHS Mental Health Services', num: '111', tel: '111' },
+        { name: 'CALM (5 PM – Midnight daily)', num: '0800 58 58 58', tel: '0800585858' },
+        { name: 'National Emergency', num: '999 or 112', tel: '999' }
       ]
     },
     {
-      code: 'ZA',
-      country: 'South Africa',
+      code: 'IE', country: 'Ireland',
+      keywords: 'ireland dublin samaritans pieta 116123 999 112',
       lines: [
-        { name: 'SADAG Suicide Line', num: '0800 21 22 23', tel: '0800212223' },
-        { name: 'Emergency', num: '10111', tel: '10111' }
+        { name: 'Samaritans Ireland (Free, 24/7)', num: '116 123', tel: '116123' },
+        { name: 'Pieta House Crisis Line', num: '1800 247 247', tel: '1800247247' },
+        { name: 'National Emergency', num: '999 or 112', tel: '112' }
       ]
     },
     {
-      code: 'BR',
-      country: 'Brazil',
+      code: 'DE', country: 'Germany (Deutschland)',
+      keywords: 'germany berlin munich telefonseelsorge 0800 112',
       lines: [
-        { name: 'CVV Centro de Valorizacao', num: '188', tel: '188' },
-        { name: 'Emergency', num: '192', tel: '192' }
+        { name: 'TelefonSeelsorge (Free, 24/7)', num: '0800 111 0 111', tel: '08001110111' },
+        { name: 'TelefonSeelsorge Alternative', num: '0800 111 0 222', tel: '08001110222' },
+        { name: 'Nummer gegen Kummer (Youth)', num: '116 111', tel: '116111' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'FR', country: 'France',
+      keywords: 'france paris 3114 sos amitie 15 112',
+      lines: [
+        { name: 'National Suicide Prevention (Free, 24/7)', num: '3114', tel: '3114' },
+        { name: 'SOS Amitié', num: '+33 1 40 09 15 22', tel: '+33140091522' },
+        { name: 'Emergency (SAMU / Medical)', num: '15 or 112', tel: '15' }
+      ]
+    },
+    {
+      code: 'ES', country: 'Spain (España)',
+      keywords: 'spain madrid 024 telefono de la esperanza 112',
+      lines: [
+        { name: 'Línea de Atención a la Conducta Suicida', num: '024', tel: '024' },
+        { name: 'Teléfono de la Esperanza', num: '717 003 717', tel: '717003717' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'IT', country: 'Italy (Italia)',
+      keywords: 'italy rome milan telefono amico 112',
+      lines: [
+        { name: 'Telefono Amico Italia', num: '02 2327 2327', tel: '0223272327' },
+        { name: 'Samaritans Onlus', num: '06 7720 8977', tel: '0677208977' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'NL', country: 'Netherlands (Nederland)',
+      keywords: 'netherlands amsterdam 113 zelfmoordpreventie 112',
+      lines: [
+        { name: '113 Zelfmoordpreventie (Free, 24/7)', num: '0800-0113', tel: '08000113' },
+        { name: 'De Luisterlijn', num: '088 0767 000', tel: '0880767000' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'BE', country: 'Belgium (België)',
+      keywords: 'belgium brussels zelfmoordlijn 1813 112',
+      lines: [
+        { name: 'Zelfmoordlijn (Flemish, 24/7)', num: '1813', tel: '1813' },
+        { name: 'Prévention du Suicide (French, 24/7)', num: '0800 32 123', tel: '080032123' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'CH', country: 'Switzerland (Schweiz)',
+      keywords: 'switzerland zurich geneva 143 144 112',
+      lines: [
+        { name: 'Die Dargebotene Hand / La Main Tendue', num: '143', tel: '143' },
+        { name: 'Emergency (Ambulance)', num: '144', tel: '144' },
+        { name: 'Emergency (Police/General)', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'AT', country: 'Austria (Österreich)',
+      keywords: 'austria vienna telefonseelsorge 142 112',
+      lines: [
+        { name: 'TelefonSeelsorge (Free, 24/7)', num: '142', tel: '142' },
+        { name: 'Rat auf Draht (Youth)', num: '147', tel: '147' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'PT', country: 'Portugal',
+      keywords: 'portugal lisbon sos voz amiga 112',
+      lines: [
+        { name: 'SOS Voz Amiga', num: '213 544 545', tel: '213544545' },
+        { name: 'Conversa Amiga', num: '808 237 327', tel: '808237327' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'PL', country: 'Poland (Polska)',
+      keywords: 'poland warsaw telefon zaufania 116123 112',
+      lines: [
+        { name: 'Kryzysowy Telefon Zaufania', num: '116 123', tel: '116123' },
+        { name: 'Telefon dla Dzieci i Młodzieży', num: '116 111', tel: '116111' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'RU', country: 'Russia (Россия)',
+      keywords: 'russia moscow trust line 8800 112',
+      lines: [
+        { name: 'National Psychological Help (Free)', num: '8-800-2000-122', tel: '88002000122' },
+        { name: 'Moscow Crisis Line', num: '051', tel: '051' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+
+    // --- SCANDINAVIA ---
+    {
+      code: 'SE', country: 'Sweden (Sverige)',
+      keywords: 'sweden stockholm mind sjalvmordslinjen 90101 112',
+      lines: [
+        { name: 'Mind Självmordslinjen (24/7)', num: '90101', tel: '90101' },
+        { name: 'Jourhavande Medmänniska', num: '08-702 16 80', tel: '087021680' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'NO', country: 'Norway (Norge)',
+      keywords: 'norway oslo mental helse kirkens sos 116123 113',
+      lines: [
+        { name: 'Mental Helse Hjelpetelefonen (24/7)', num: '116 123', tel: '116123' },
+        { name: 'Kirkens SOS (24/7)', num: '22 40 00 40', tel: '22400040' },
+        { name: 'Emergency (Ambulance)', num: '113', tel: '113' },
+        { name: 'Emergency (Police)', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'DK', country: 'Denmark (Danmark)',
+      keywords: 'denmark copenhagen livslinien 112',
+      lines: [
+        { name: 'Livslinien Crisis Hotline', num: '70 20 12 01', tel: '70201201' },
+        { name: 'Psykiatrifondens Rådgivning', num: '+45 39 25 25 25', tel: '+4539252525' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'FI', country: 'Finland (Suomi)',
+      keywords: 'finland helsinki mieli 112',
+      lines: [
+        { name: 'Mieli Crisis Helpline (Finnish)', num: '09 2525 0111', tel: '0925250111' },
+        { name: 'Mieli Crisis Line (English/Arabic)', num: '09 2525 0113', tel: '0925250113' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+
+    // --- MIDDLE EAST ---
+    {
+      code: 'AE', country: 'United Arab Emirates',
+      keywords: 'uae dubai abu dhabi hope line nafaes 800 999',
+      lines: [
+        { name: 'Hope Line (Nafaes Toll-Free)', num: '800 4673', tel: '8004673' },
+        { name: 'National Emergency', num: '999', tel: '999' }
+      ]
+    },
+    {
+      code: 'SA', country: 'Saudi Arabia',
+      keywords: 'saudi arabia riyadh mental health 9200 911',
+      lines: [
+        { name: 'Mental Health Advisory Line', num: '920033360', tel: '920033360' },
+        { name: 'National Emergency', num: '911', tel: '911' }
+      ]
+    },
+    {
+      code: 'LB', country: 'Lebanon',
+      keywords: 'lebanon beirut embrace 1564 112',
+      lines: [
+        { name: 'Embrace National Lifeline', num: '1564', tel: '1564' },
+        { name: 'National Emergency', num: '112', tel: '112' }
+      ]
+    },
+    {
+      code: 'IL', country: 'Israel',
+      keywords: 'israel tel aviv jerusalem eran 1201 101',
+      lines: [
+        { name: 'ERAN Mental Health First Aid (24/7)', num: '1201', tel: '1201' },
+        { name: 'Emergency (Ambulance)', num: '101', tel: '101' },
+        { name: 'Emergency (Police)', num: '100', tel: '100' }
+      ]
+    },
+
+    // --- OCEANIA ---
+    {
+      code: 'AU', country: 'Australia',
+      keywords: 'australia sydney melbourne brisbane lifeline beyond blue 131114 000',
+      lines: [
+        { name: 'Lifeline Australia (Free, 24/7)', num: '13 11 14', tel: '131114' },
+        { name: 'Beyond Blue (24/7)', num: '1300 22 4636', tel: '1300224636' },
+        { name: 'Kids Helpline (Ages 5-25)', num: '1800 55 1800', tel: '1800551800' },
+        { name: 'National Emergency', num: '000', tel: '000' }
+      ]
+    },
+    {
+      code: 'NZ', country: 'New Zealand',
+      keywords: 'new zealand auckland 1737 lifeline 111',
+      lines: [
+        { name: 'Need to Talk? (Call/Text 24/7)', num: '1737', tel: '1737' },
+        { name: 'Lifeline Aotearoa (24/7)', num: '0800 543 354', tel: '0800543354' },
+        { name: 'Youthline', num: '0800 376 633', tel: '0800376633' },
+        { name: 'National Emergency', num: '111', tel: '111' }
+      ]
+    },
+    {
+      code: 'FJ', country: 'Fiji',
+      keywords: 'fiji lifeline 132454 911',
+      lines: [
+        { name: 'Lifeline Fiji', num: '132 454', tel: '132454' },
+        { name: 'National Emergency', num: '911', tel: '911' }
+      ]
+    },
+
+    // --- LATIN AMERICA ---
+    {
+      code: 'BR', country: 'Brazil (Brasil)',
+      keywords: 'brazil sao paulo cvv 188 192',
+      lines: [
+        { name: 'CVV Centro de Valorização da Vida', num: '188', tel: '188' },
+        { name: 'Emergency (SAMU)', num: '192', tel: '192' },
+        { name: 'Emergency (Police)', num: '190', tel: '190' }
+      ]
+    },
+    {
+      code: 'AR', country: 'Argentina',
+      keywords: 'argentina buenos aires cas 135 911',
+      lines: [
+        { name: 'Centro de Asistencia al Suicida', num: '135', tel: '135' },
+        { name: 'CAS National Line', num: '(011) 5275-1135', tel: '01152751135' },
+        { name: 'National Emergency', num: '911', tel: '911' }
+      ]
+    },
+    {
+      code: 'CO', country: 'Colombia',
+      keywords: 'colombia bogota linea 106 123',
+      lines: [
+        { name: 'Línea 106 (Ayuda Psicológica)', num: '106', tel: '106' },
+        { name: 'National Emergency', num: '123', tel: '123' }
+      ]
+    },
+    {
+      code: 'CL', country: 'Chile',
+      keywords: 'chile santiago salud mental 4141 131',
+      lines: [
+        { name: 'Fono Salud Mental (*4141)', num: '*4141', tel: '*4141' },
+        { name: 'Emergency (Ambulance)', num: '131', tel: '131' }
+      ]
+    },
+    {
+      code: 'PE', country: 'Peru (Perú)',
+      keywords: 'peru lima linea 113 105',
+      lines: [
+        { name: 'Línea 113 (Opción 5 - Salud Mental)', num: '113', tel: '113' },
+        { name: 'Emergency (Police)', num: '105', tel: '105' }
+      ]
+    },
+
+    // --- AFRICA ---
+    {
+      code: 'ZA', country: 'South Africa',
+      keywords: 'south africa sadag lifeline 0800 10111',
+      lines: [
+        { name: 'SADAG Suicide Crisis Line (8AM-8PM)', num: '0800 21 22 23', tel: '0800212223' },
+        { name: 'SADAG After-Hours Helpline (24/7)', num: '0800 12 13 14', tel: '0800121314' },
+        { name: 'Lifeline South Africa (24/7)', num: '0861 322 322', tel: '0861322322' },
+        { name: 'National Emergency (Police)', num: '10111', tel: '10111' },
+        { name: 'Emergency (Ambulance)', num: '10177', tel: '10177' }
+      ]
+    },
+    {
+      code: 'NG', country: 'Nigeria',
+      keywords: 'nigeria lagos abuja mani 112',
+      lines: [
+        { name: 'MANI (Mentally Aware Nigeria)', num: '+234 809 210 6493', tel: '+2348092106493' },
+        { name: 'National Emergency', num: '112 or 199', tel: '112' }
+      ]
+    },
+    {
+      code: 'KE', country: 'Kenya',
+      keywords: 'kenya nairobi befrienders 999 112',
+      lines: [
+        { name: 'Befrienders Kenya', num: '+254 722 178 177', tel: '+254722178177' },
+        { name: 'National Emergency', num: '999 or 112', tel: '999' }
+      ]
+    },
+    {
+      code: 'GH', country: 'Ghana',
+      keywords: 'ghana accra 112 999',
+      lines: [
+        { name: 'National Emergency', num: '112 or 999', tel: '112' }
       ]
     }
   ];
@@ -215,19 +704,35 @@
 
   function render(query = '') {
     grid.innerHTML = '';
-    const q = query.toLowerCase();
+    const q = query.trim().toLowerCase();
 
-    // Sort so detected country is first
+    // Sort: detected country first, then alphabetical
     const sorted = [...HELPLINES].sort((a, b) => {
       if (a.code === detectedCode) return -1;
       if (b.code === detectedCode) return 1;
       return a.country.localeCompare(b.country);
     });
 
+    let matchCount = 0;
+
     for (const item of sorted) {
-      if (q && !item.country.toLowerCase().includes(q) && !item.code.toLowerCase().includes(q)) {
-        continue;
+      // Robust multi-field search: check country, code, keywords, and lines
+      let matches = false;
+      if (!q) {
+        matches = true;
+      } else {
+        const fullSearchBlob = (
+          item.country + ' ' +
+          item.code + ' ' +
+          (item.keywords || '') + ' ' +
+          item.lines.map(l => l.name + ' ' + l.num).join(' ')
+        ).toLowerCase();
+
+        matches = fullSearchBlob.includes(q);
       }
+
+      if (!matches) continue;
+      matchCount++;
 
       const isDetected = (item.code === detectedCode);
       const card = document.createElement('div');
@@ -253,6 +758,15 @@
         </div>
       `;
       grid.appendChild(card);
+    }
+
+    if (matchCount === 0) {
+      grid.innerHTML = `
+        <div class="no-results">
+          <p style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:8px;">No local numbers found for "${query}"</p>
+          <p>Please check the Universal Resources above or visit <a href="https://findahelpline.com" target="_blank" rel="noopener" style="color:var(--accent);">findahelpline.com</a> for verified helplines in 175+ countries.</p>
+        </div>
+      `;
     }
   }
 

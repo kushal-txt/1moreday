@@ -5,17 +5,67 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Private 1-on-1 Sanctuary — OneMoreDay</title>
 <link rel="stylesheet" href="/css/style.css">
+<style>
+  .share-banner {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .share-banner p {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .share-banner strong {
+    color: var(--accent);
+  }
+  .btn-copy {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-copy:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .connection-pill {
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-card);
+  }
+  .connection-pill .dot {
+    width: 6px; height: 6px;
+    display: inline-block;
+  }
+  .connection-pill.live .dot { background: var(--success); }
+  .connection-pill.waiting .dot { background: #F5A623; }
+  .connection-pill.ended .dot { background: var(--danger); }
+</style>
 </head>
 <body>
 
 <header class="nav">
   <a href="/" class="brand">
     One<span>More</span>Day
-    <span class="brand-badge">Private DM</span>
+    <span class="brand-badge">Private 1-on-1</span>
   </a>
   <div class="nav-user">
-    <span>●</span>
-    <span id="userBadge">Anonymous</span>
+    <span id="dmConnStatus" class="connection-pill waiting"><span class="dot"></span> Connecting...</span>
+    <span id="userBadge" style="font-weight:700; color:var(--text);">Anonymous</span>
   </div>
   <nav class="nav-links">
     <a href="/circles">Campfires</a>
@@ -23,35 +73,36 @@
   </nav>
 </header>
 
-<div class="container" style="max-width: 800px; padding-top: 24px;">
+<div class="container" style="max-width: 820px; padding-top: 24px;">
+
+  <!-- Share invite link banner if waiting -->
+  <div class="share-banner" id="shareBanner">
+    <div>
+      <p><strong>Private Encounter Room</strong> &middot; You can invite a peer by sharing this private link:</p>
+      <div id="roomUrlText" style="font-size: 11px; color: var(--text-muted); word-break: break-all; margin-top: 4px;"></div>
+    </div>
+    <button type="button" id="copyLinkBtn" class="btn-copy">Copy Private Link</button>
+  </div>
 
   <!-- Chat Box -->
   <div style="border: 1px solid var(--border); background: var(--surface);">
     
     <div class="chat-header">
       <div>
-        <div class="chat-title" id="dmHeader">Connected with Peer</div>
-        <div class="chat-subtitle">Private &middot; Encrypted &middot; Ephemeral (No logs saved)</div>
+        <div class="chat-title" id="dmHeader">Private Encounter</div>
+        <div class="chat-subtitle">Private &middot; Ephemeral &middot; When either leaves, this conversation evaporates forever</div>
       </div>
-      <button type="button" class="btn-danger" onclick="leaveAndWipe()">End & Wipe Chat</button>
+      <button type="button" class="btn-danger" id="endBtn">End & Wipe Chat</button>
     </div>
 
-    <div class="chat-messages" id="dmBox" style="min-height: 400px; max-height: 550px;">
-      <div class="msg system">
-        Both peers have mutually accepted this private room. When either leaves, this conversation evaporates forever.
-      </div>
-
-      <div class="msg other" id="greetingMsg">
-        <div class="msg-author" id="peerAuthor">Peer</div>
-        <div class="msg-bubble">
-          Hey, thanks for accepting. I just really needed to talk to someone who understands.
-        </div>
-        <div class="msg-time">Just now</div>
+    <div class="chat-messages" id="dmBox" style="min-height: 420px; max-height: 550px;">
+      <div class="msg system" id="dmWelcome">
+        Connected to private sanctuary. Take your time. No logs are saved.
       </div>
     </div>
 
     <div class="chat-input-bar">
-      <input type="text" id="dmInput" class="chat-input" placeholder="Type your message privately... (Links blocked)">
+      <input type="text" id="dmInput" class="chat-input" placeholder="Type your message privately... (Links and numbers blocked)" maxlength="500">
       <button type="button" id="dmSendBtn" class="btn-primary" style="padding: 12px 24px;">Send</button>
     </div>
 
@@ -60,40 +111,138 @@
 </div>
 
 <footer class="footer">
-  <p>OneMoreDay &middot; Ephemeral Encounters. No persistence.</p>
+  <p>OneMoreDay &middot; Ephemeral Encounters. Zero database. Zero persistence.</p>
 </footer>
 
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script src="/js/app.js"></script>
 <script>
-  let myName = OMD.getSession() || OMD.generateRandomName();
+(async function() {
+  // 1. Ensure user has session handle
+  let myName = OMD.getSession();
+  if (!myName) {
+    myName = OMD.generateRandomName();
+    OMD.setSession(myName);
+  }
   document.getElementById('userBadge').innerText = myName;
 
+  // Mint cryptographically signed server session cookie
+  await OMD.createServerSession(myName);
+
+  // 2. Parse room ID and peer from URL
   const urlParams = new URLSearchParams(window.location.search);
-  const peerName = urlParams.get('peer') || 'QuietPeer';
+  let dmId = urlParams.get('id');
+  if (!dmId) {
+    dmId = 'dm-' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+    const url = new URL(window.location);
+    url.searchParams.set('id', dmId);
+    window.history.replaceState(null, '', url);
+  }
+
+  const rawPeer = urlParams.get('peer');
+  const peerName = rawPeer && rawPeer !== 'AwaitingPeer' ? rawPeer : 'Peer';
 
   document.getElementById('dmHeader').innerText = `Private Encounter with ${peerName}`;
-  document.getElementById('peerAuthor').innerText = peerName;
+  document.getElementById('roomUrlText').innerText = window.location.href;
 
   const dmBox = document.getElementById('dmBox');
   const dmInput = document.getElementById('dmInput');
   const dmSendBtn = document.getElementById('dmSendBtn');
+  const connStatus = document.getElementById('dmConnStatus');
+  const copyLinkBtn = document.getElementById('copyLinkBtn');
+  const endBtn = document.getElementById('endBtn');
 
-  function sendDm() {
-    const raw = dmInput.value.trim();
-    if (!raw) return;
+  const channelName = 'private-dm-' + dmId;
+  let activePusherChannel = null;
+  let pusherInstance = null;
+  let pollInterval = null;
+  let latestMsgTimestamp = 0;
+  let renderedMessageIds = new Set();
 
-    const sanitized = OMD.sanitizeText(raw);
+  function updateStatus(state, label) {
+    connStatus.className = 'connection-pill ' + state;
+    connStatus.innerHTML = `<span class="dot"></span> ${label}`;
+  }
 
+  function renderDm(data) {
+    if (data.id && renderedMessageIds.has(data.id)) return;
+    if (data.id) renderedMessageIds.add(data.id);
+
+    // If leave notification
+    if (data.type === 'leave') {
+      const notice = document.createElement('div');
+      notice.className = 'msg system';
+      notice.innerText = `${data.nickname || 'Your peer'} has left the room. This conversation is now over.`;
+      dmBox.appendChild(notice);
+      dmInput.disabled = true;
+      dmSendBtn.disabled = true;
+      updateStatus('ended', 'Ended');
+      return;
+    }
+
+    const isSelf = (data.nickname === myName);
     const msgDiv = document.createElement('div');
-    msgDiv.className = 'msg self';
+    msgDiv.className = 'msg ' + (isSelf ? 'self' : 'other');
     msgDiv.innerHTML = `
-      <div class="msg-author">${myName} (You)</div>
-      <div class="msg-bubble">${sanitized}</div>
-      <div class="msg-time">Just now</div>
+      <div class="msg-author">${OMD.sanitizeText(data.nickname)}${isSelf ? ' (You)' : ''}</div>
+      <div class="msg-bubble">${OMD.sanitizeText(data.text)}</div>
+      <div class="msg-time">${data.time || OMD.formatTime(new Date())}</div>
     `;
     dmBox.appendChild(msgDiv);
     dmBox.scrollTop = dmBox.scrollHeight;
+
+    if (data.timestamp && data.timestamp > latestMsgTimestamp) {
+      latestMsgTimestamp = data.timestamp;
+    }
+  }
+
+  // 3. Load initial messages
+  const initialMessages = await OMD.fetchMessages(channelName);
+  if (initialMessages && initialMessages.length > 0) {
+    initialMessages.forEach(renderDm);
+  }
+
+  // 4. Initialize Pusher + Fallback
+  const config = await OMD.getConfig();
+  if (config.configured && config.pusherKey) {
+    pusherInstance = OMD.initPusher(config.pusherKey, config.pusherCluster);
+    if (pusherInstance) {
+      pusherInstance.connection.bind('connected', () => updateStatus('live', 'Live'));
+      pusherInstance.connection.bind('connecting', () => updateStatus('waiting', 'Connecting...'));
+      pusherInstance.connection.bind('unavailable', () => updateStatus('live', 'Active'));
+      pusherInstance.connection.bind('failed', () => updateStatus('live', 'Active'));
+
+      activePusherChannel = pusherInstance.subscribe(channelName);
+      activePusherChannel.bind('pusher:subscription_succeeded', () => {
+        updateStatus('live', 'Live');
+      });
+      activePusherChannel.bind('new-message', (data) => {
+        renderDm(data);
+      });
+    }
+  } else {
+    updateStatus('live', 'Active');
+  }
+
+  // Polling fallback
+  pollInterval = setInterval(async () => {
+    const fresh = await OMD.fetchMessages(channelName, latestMsgTimestamp);
+    if (fresh && fresh.length > 0) {
+      fresh.forEach(renderDm);
+    }
+  }, 2000);
+
+  // 5. Send message
+  async function sendDm() {
+    const raw = dmInput.value.trim();
+    if (!raw) return;
+
     dmInput.value = '';
+
+    const res = await OMD.sendMessage(channelName, raw);
+    if (res && res.message) {
+      renderDm(res.message);
+    }
   }
 
   dmSendBtn.addEventListener('click', sendDm);
@@ -101,11 +250,24 @@
     if (e.key === 'Enter') sendDm();
   });
 
-  function leaveAndWipe() {
+  // Copy private link
+  copyLinkBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      copyLinkBtn.innerText = 'Copied!';
+      setTimeout(() => { copyLinkBtn.innerText = 'Copy Private Link'; }, 2000);
+    });
+  });
+
+  // End & Wipe
+  endBtn.addEventListener('click', async () => {
     if (confirm('Are you sure you want to end this conversation? All text will be immediately wiped.')) {
+      await OMD.sendMessage(channelName, '', { type: 'leave' });
+      clearInterval(pollInterval);
       window.location.href = '/circles';
     }
-  }
+  });
+
+})();
 </script>
 
 </body>

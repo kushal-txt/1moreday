@@ -11,8 +11,17 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { nickname } = req.body || {};
-    
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        const querystring = require('querystring');
+        body = querystring.parse(body);
+      }
+    }
+    const { nickname } = body || {};
+
     // Sanitize nickname (letters, numbers, underscores, max 20 chars)
     const cleanName = (nickname || 'Anonymous')
       .trim()
@@ -33,13 +42,13 @@ module.exports = async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    // Set HttpOnly, Secure, SameSite=Strict cookie
+    // Set HttpOnly, Secure, SameSite=Lax cookie
     res.setHeader(
       'Set-Cookie',
       cookie.serialize('omd_session', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax',
         maxAge: 86400, // 24 hours
         path: '/'
       })
