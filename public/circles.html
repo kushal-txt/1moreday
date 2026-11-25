@@ -6,16 +6,16 @@
 <title>Campfire Circles — 1MoreDay</title>
 <link rel="stylesheet" href="/css/style.css">
 <style>
-  .invite-modal {
+  .modal-overlay {
     display: none;
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(10, 13, 18, 0.85);
+    background: rgba(10, 13, 18, 0.88);
     z-index: 200;
     justify-content: center;
     align-items: center;
   }
-  .invite-modal.active { display: flex; }
+  .modal-overlay.active { display: flex; }
   .modal-box {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -41,6 +41,18 @@
     justify-content: center;
     flex-wrap: wrap;
   }
+  .pulse-loader {
+    width: 14px;
+    height: 14px;
+    background: var(--coral);
+    margin: 16px auto;
+    animation: pulseAnim 1.4s infinite ease-in-out;
+  }
+  @keyframes pulseAnim {
+    0%, 100% { transform: scale(0.7); opacity: 0.4; }
+    50% { transform: scale(1.3); opacity: 1; }
+  }
+
   .online-pill {
     font-size: 11px;
     color: var(--accent);
@@ -61,42 +73,97 @@
   }
   .connection-status.connected .dot { background: var(--success); }
   .connection-status.connecting .dot { background: #F5A623; }
-  .connection-status.fallback .dot { background: var(--accent); }
   .connection-status.disconnected .dot { background: var(--danger); }
   
-  .dm-quick-card {
-    padding: 16px 20px;
+  .dm-match-card {
+    padding: 20px;
     border-top: 1px solid var(--border);
-    background: var(--surface);
+    background: var(--surface-card);
   }
-  .dm-quick-card h4 {
-    font-size: 12px;
+  .dm-match-card h4 {
+    font-size: 13px;
     color: var(--text);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
   }
-  .dm-quick-card p {
-    font-size: 11px;
+  .dm-match-card p {
+    font-size: 12px;
     color: var(--text-muted);
-    margin-bottom: 10px;
+    margin-bottom: 14px;
     line-height: 1.4;
   }
-  .btn-sm {
-    padding: 8px 14px;
-    font-size: 11px;
+  .btn-match {
+    background: var(--coral);
+    color: #0A0D12;
+    border: none;
+    padding: 12px 18px;
     font-weight: 700;
-  }
-  .empty-room-prompt {
-    text-align: center;
-    padding: 30px 20px;
-    color: var(--text-muted);
     font-size: 13px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s;
+  }
+  .btn-match:hover {
+    background: var(--coral-dark);
   }
 
-  /* Inline Message Action Buttons */
+  .empty-room-prompt {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* India-First Crisis Intervention Card */
+  .crisis-card-india {
+    background: var(--surface);
+    border: 1px solid var(--coral);
+    border-left: 4px solid var(--coral);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .crisis-card-india h4 {
+    font-size: 15px;
+    color: var(--coral);
+    margin-bottom: 4px;
+  }
+  .crisis-card-india p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+  .crisis-num-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .crisis-btn {
+    background: var(--coral);
+    color: #0A0D12;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .crisis-btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    font-size: 12px;
+    text-decoration: none;
+  }
+  .crisis-btn-ghost:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Inline Message Actions */
   .msg-actions {
     display: inline-flex;
     gap: 8px;
-    margin-left: 8px;
+    margin-left: 10px;
     font-size: 11px;
   }
   .btn-action-link {
@@ -106,12 +173,19 @@
     font-size: 11px;
     cursor: pointer;
     padding: 0;
-    transition: color 0.2s;
   }
   .btn-action-link:hover { color: var(--text); }
-  .btn-action-link.accent { color: var(--accent); }
-  .btn-action-link.accent:hover { text-decoration: underline; }
   .btn-action-link.danger:hover { color: var(--danger); }
+
+  .room-full-alert {
+    padding: 10px 16px;
+    background: var(--surface-card);
+    border: 1px solid var(--coral);
+    color: var(--coral);
+    font-size: 12px;
+    margin-bottom: 14px;
+    display: none;
+  }
 
   @media (max-width: 768px) {
     .chat-layout { grid-template-columns: 1fr; }
@@ -132,20 +206,23 @@
   </div>
   <nav class="nav-links">
     <a href="/circles" class="active">Campfires</a>
+    <a href="/dm" style="color:var(--coral);">1-on-1 Chat</a>
     <a href="/helplines">Helplines</a>
-    <a href="/dm" style="color:var(--coral);">1-on-1 Sanctuary</a>
   </nav>
 </header>
 
 <div class="container" style="padding-top: 24px;">
 
-  <!-- Gentle Crisis Alert Banner (Surfaces if triggered) -->
-  <div id="crisisAlert" class="crisis-banner" style="display: none;">
-    <div class="crisis-text">
-      <h4>Need immediate professional support?</h4>
-      <p>If you or someone here is in acute distress or expressing self-harm, free and confidential crisis counselors are standing by in your country right now.</p>
+  <!-- India-First Crisis Alert Card (Surfaces when crisis language is detected) -->
+  <div id="crisisCard" class="crisis-card-india" style="display: none;">
+    <h4>You do not have to carry this alone &middot; Immediate Help is Available</h4>
+    <p>If you or someone in this room is in acute distress or having thoughts of self-harm, free and confidential counselors are standing by right now:</p>
+    <div class="crisis-num-row">
+      <a href="tel:14416" class="crisis-btn">Tele-MANAS: Call 14416 (Toll-Free, 24/7)</a>
+      <a href="tel:18005990019" class="crisis-btn-ghost">KIRAN: 1800-599-0019</a>
+      <a href="tel:112" class="crisis-btn-ghost">Emergency: 112</a>
+      <a href="/helplines" class="crisis-btn-ghost">Other 50+ Countries &rarr;</a>
     </div>
-    <a href="/helplines" class="btn-coral">View Helplines</a>
   </div>
 
   <!-- Chat Layout -->
@@ -153,41 +230,41 @@
     
     <!-- Sidebar: 3 Core Campfires -->
     <div class="chat-sidebar">
-      <div class="sidebar-header">24/7 Sanctuaries</div>
+      <div class="sidebar-header">Campfire Circles (Cap: 10)</div>
       
       <a href="javascript:void(0)" class="circle-nav-item active" id="tab-overthinking" data-room="overthinking">
         <div>
           <div class="circle-nav-name">The Overthinking Room</div>
           <div style="font-size: 11px; color: var(--text-muted);">Depression, loneliness, insomnia</div>
         </div>
-        <div class="online-pill" id="count-overthinking">Active</div>
+        <div class="online-pill" id="count-overthinking">0 online</div>
       </a>
 
       <a href="javascript:void(0)" class="circle-nav-item" id="tab-heavy-chest" data-room="heavy-chest">
         <div>
           <div class="circle-nav-name">The Heavy Chest</div>
-          <div style="font-size: 11px; color: var(--text-muted);">Financial stress, debt, job loss</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Financial burden, debt, career anxiety</div>
         </div>
-        <div class="online-pill" id="count-heavy-chest">Active</div>
+        <div class="online-pill" id="count-heavy-chest">0 online</div>
       </a>
 
       <a href="javascript:void(0)" class="circle-nav-item" id="tab-broken-ties" data-room="broken-ties">
         <div>
           <div class="circle-nav-name">Broken Ties</div>
-          <div style="font-size: 11px; color: var(--text-muted);">Heartbreak, family estrangement</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Heartbreak, family conflict, grief</div>
         </div>
-        <div class="online-pill" id="count-broken-ties">Active</div>
+        <div class="online-pill" id="count-broken-ties">0 online</div>
       </a>
 
-      <!-- 1-on-1 Quick Action -->
-      <div class="dm-quick-card">
-        <h4>Need 1-on-1 Support?</h4>
-        <p>Prefer to speak privately with one person rather than a group? Start an ephemeral 1-on-1 sanctuary.</p>
-        <button type="button" id="startDmBtn" class="btn-coral btn-sm" style="width:100%;">Create 1-on-1 Room</button>
+      <!-- 1-on-1 Random Matchmaking Card -->
+      <div class="dm-match-card">
+        <h4>Need a 1-on-1 listener?</h4>
+        <p>No choosing strangers. Get automatically paired with the next anonymous peer waiting to talk.</p>
+        <button type="button" id="startMatchBtn" class="btn-match">Talk to someone 1-on-1</button>
       </div>
 
       <div style="padding: 16px 20px; margin-top: auto; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); line-height: 1.4;">
-        Capped at 30–50 peers per room so everyone gets heard. Completely text-only. Zero database persistence.
+        Capped at 10 peers per room &middot; Messages automatically delete after 24 hours &middot; Text only.
       </div>
     </div>
 
@@ -196,20 +273,24 @@
       <div class="chat-header">
         <div>
           <div class="chat-title" id="roomTitle">The Overthinking Room</div>
-          <div class="chat-subtitle" id="roomSubtitle">Capped at 30–50 peers &middot; Ephemeral routing &middot; Zero database persistence</div>
+          <div class="chat-subtitle" id="roomSubtitle">Capped at 10 peers &middot; Messages automatically delete after 24 hours</div>
         </div>
         <div class="slow-mode-pill">Slow Mode: 5s</div>
       </div>
 
+      <div id="roomFullAlert" class="room-full-alert">
+        This room has reached the 10-person intimacy cap. You may read along silently, or switch to another campfire.
+      </div>
+
       <div class="chat-messages" id="messagesBox">
         <div class="msg system">
-          Welcome to the circle. Take a breath. You do not have to carry your mask here.
+          Welcome to the circle. Take a breath. Messages in this sanctuary automatically delete after 24 hours.
         </div>
       </div>
 
       <div class="chat-input-bar">
-        <input type="text" id="chatInput" class="chat-input" placeholder="Type a reflection... (Links and contact info automatically blocked)" maxlength="500">
-        <button type="button" id="sendBtn" class="btn-primary" style="padding: 12px 20px;">Send</button>
+        <input type="text" id="chatInput" class="chat-input" placeholder="Share your reflection... (Links and contact handles automatically blocked)" maxlength="500">
+        <button type="button" id="sendBtn" class="btn-primary" style="padding: 12px 24px;">Send</button>
       </div>
     </div>
 
@@ -217,28 +298,28 @@
 
 </div>
 
-<!-- 1-on-1 Mutual Invite Modal -->
-<div class="invite-modal" id="inviteModal">
+<!-- Matchmaking Waiting Modal -->
+<div class="modal-overlay" id="matchModal">
   <div class="modal-box">
-    <h3 id="modalPeerName">Start a Private 1-on-1</h3>
-    <p id="modalPromptText">Would you like to open an ephemeral 1-on-1 sanctuary with this peer? Both peers must accept.</p>
+    <h3>Finding an Anonymous Peer...</h3>
+    <div class="pulse-loader"></div>
+    <p>You have been placed in the matching queue. We will automatically connect you as soon as the next peer arrives.</p>
     <div class="modal-btns">
-      <button class="btn-coral" id="acceptInviteBtn">Accept 1-on-1</button>
-      <button class="btn-ghost" id="declineInviteBtn">Decline</button>
+      <button class="btn-ghost" id="cancelMatchBtn">Cancel &amp; Return to Circle</button>
     </div>
   </div>
 </div>
 
 <!-- Report Peer Modal -->
-<div class="invite-modal" id="reportModal">
+<div class="modal-overlay" id="reportModal">
   <div class="modal-box">
     <h3 style="color:var(--danger);">Report User</h3>
-    <p>Please select a reason for reporting <strong id="reportTargetName">this user</strong>. They will be muted for you immediately.</p>
+    <p>Report <strong id="reportTargetName">this user</strong>. They will be muted for you immediately.</p>
     <div style="margin-bottom: 20px; text-align: left; font-size: 12px; color: var(--text);">
-      <label style="display:block; margin-bottom:8px;"><input type="radio" name="reportReason" value="Harmful or abusive speech" checked> Harmful or abusive speech</label>
+      <label style="display:block; margin-bottom:8px;"><input type="radio" name="reportReason" value="Harmful or abusive language" checked> Harmful or abusive language</label>
       <label style="display:block; margin-bottom:8px;"><input type="radio" name="reportReason" value="Self-harm or suicide intent"> Self-harm or suicide intent</label>
-      <label style="display:block; margin-bottom:8px;"><input type="radio" name="reportReason" value="Predatory or off-platform solicitation"> Asking for off-platform contact</label>
-      <label style="display:block;"><input type="radio" name="reportReason" value="Spam or disruptive behavior"> Spam or disruptive behavior</label>
+      <label style="display:block; margin-bottom:8px;"><input type="radio" name="reportReason" value="Predatory or off-platform contact solicitation"> Soliciting phone numbers / off-platform apps</label>
+      <label style="display:block;"><input type="radio" name="reportReason" value="Disruptive spam"> Spam or disruptive behavior</label>
     </div>
     <div class="modal-btns">
       <button class="btn-danger" id="confirmReportBtn">Submit Report &amp; Mute</button>
@@ -248,10 +329,11 @@
 </div>
 
 <footer class="footer">
-  <p>1MoreDay &middot; Every conversation is an ephemeral gift. Zero database persistence.</p>
+  <p>1MoreDay &middot; Messages automatically delete after 24 hours &middot; Zero permanent archives.</p>
 </footer>
 
-<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<!-- Supabase Client Library from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/app.js"></script>
 <script>
 (async function() {
@@ -262,9 +344,6 @@
     OMD.setSession(myName);
   }
   document.getElementById('userBadge').innerText = myName;
-
-  // Mint cryptographically signed server session cookie
-  await OMD.createServerSession(myName);
 
   // 2. Room definitions
   const ROOM_TITLES = {
@@ -280,15 +359,15 @@
   const messagesBox = document.getElementById('messagesBox');
   const chatInput = document.getElementById('chatInput');
   const sendBtn = document.getElementById('sendBtn');
-  const crisisAlert = document.getElementById('crisisAlert');
+  const crisisCard = document.getElementById('crisisCard');
   const connectionStatusEl = document.getElementById('connectionStatus');
-  const startDmBtn = document.getElementById('startDmBtn');
+  const startMatchBtn = document.getElementById('startMatchBtn');
+  const matchModal = document.getElementById('matchModal');
+  const cancelMatchBtn = document.getElementById('cancelMatchBtn');
+  const roomFullAlert = document.getElementById('roomFullAlert');
 
   let lastSentTime = 0;
-  let activePusherChannel = null;
-  let pusherInstance = null;
-  let pollInterval = null;
-  let latestMsgTimestamp = 0;
+  let activeRealtimeChannel = null;
   let renderedMessageIds = new Set();
 
   function updateConnStatus(state, label) {
@@ -296,28 +375,16 @@
     connectionStatusEl.innerHTML = `<span class="dot"></span> ${label}`;
   }
 
-  function getChannelName(room) {
-    return 'presence-circle-' + room;
-  }
-
   function renderMessage(data) {
     if (data.id && renderedMessageIds.has(data.id)) return;
     if (data.id) renderedMessageIds.add(data.id);
 
-    // If author is muted/blocked by user, hide message
+    // If author is muted, skip
     if (OMD.isBlocked(data.nickname)) return;
 
-    // Crisis keyword check
-    if (OMD.checkForCrisis(data.text)) {
-      crisisAlert.style.display = 'flex';
-    }
-
-    // Handle DM invite signals
-    if (data.type === 'dm-invite') {
-      if (data.target === myName) {
-        showDmInviteReceived(data.nickname, data.dmId);
-      }
-      return;
+    // Check crisis intent on sender/receiver
+    if (OMD.checkForCrisis(data.content)) {
+      crisisCard.style.display = 'block';
     }
 
     const isSelf = (data.nickname === myName);
@@ -326,25 +393,19 @@
     msgDiv.dataset.author = data.nickname;
 
     const actionLinks = !isSelf
-      ? ` &middot; 
-          <span class="msg-actions">
-            <button class="btn-action-link accent" onclick="triggerInvite('${OMD.sanitizeText(data.nickname)}')">Invite 1-on-1</button>
-            <button class="btn-action-link" onclick="mutePeer('${OMD.sanitizeText(data.nickname)}')">Mute</button>
-            <button class="btn-action-link danger" onclick="openReportModal('${OMD.sanitizeText(data.nickname)}')">Report</button>
-          </span>`
+      ? `<span class="msg-actions">
+           <button class="btn-action-link" onclick="mutePeer('${OMD.sanitizeText(data.nickname)}')">Mute</button> &middot;
+           <button class="btn-action-link danger" onclick="openReportModal('${OMD.sanitizeText(data.nickname)}')">Report</button>
+         </span>`
       : '';
 
     msgDiv.innerHTML = `
       <div class="msg-author">${OMD.sanitizeText(data.nickname)}${isSelf ? ' (You)' : ''}</div>
-      <div class="msg-bubble">${OMD.sanitizeText(data.text)}</div>
-      <div class="msg-time">${data.time || OMD.formatTime(new Date())}${actionLinks}</div>
+      <div class="msg-bubble">${OMD.sanitizeText(data.content)}</div>
+      <div class="msg-time">${OMD.formatTime(data.created_at)}${actionLinks}</div>
     `;
     messagesBox.appendChild(msgDiv);
     messagesBox.scrollTop = messagesBox.scrollHeight;
-
-    if (data.timestamp && data.timestamp > latestMsgTimestamp) {
-      latestMsgTimestamp = data.timestamp;
-    }
   }
 
   function setRoomUI(room) {
@@ -353,83 +414,72 @@
     const tab = document.getElementById('tab-' + room);
     if (tab) tab.classList.add('active');
 
-    // Update URL query safely without reloading page
     const url = new URL(window.location);
     url.searchParams.set('room', room);
     window.history.replaceState(null, '', url);
   }
 
-  // 3. Connect to room (Loads messages + subscribes Pusher or fallback polling)
+  // 3. Connect to room: loads shared DB messages & binds Supabase Realtime
   async function joinRoom(room) {
     currentRoom = room;
     setRoomUI(room);
     messagesBox.innerHTML = `
       <div class="msg system">
-        Welcome to ${ROOM_TITLES[room]}. Take a breath. Capped at 30–50 peers.
+        Welcome to ${ROOM_TITLES[room]}. Take a breath. Capped at 10 peers &middot; Messages auto-delete after 24h.
       </div>
     `;
     renderedMessageIds.clear();
-    latestMsgTimestamp = 0;
 
-    const channelName = getChannelName(room);
-
-    // Load initial messages from server API
-    const initialMessages = await OMD.fetchMessages(channelName);
-    if (initialMessages && initialMessages.length > 0) {
-      initialMessages.forEach(renderMessage);
+    // Load real shared messages from Supabase DB
+    const existingMessages = await OMD.getMessages(room);
+    if (existingMessages && existingMessages.length > 0) {
+      existingMessages.forEach(renderMessage);
     } else {
       const emptyNotice = document.createElement('div');
       emptyNotice.className = 'empty-room-prompt';
       emptyNotice.id = 'emptyNotice';
-      emptyNotice.innerText = 'The campfire is quiet right now. You can sit silently or share your first thought.';
+      emptyNotice.innerHTML = `
+        The campfire is quiet right now.<br>
+        Be the first to share a thought, or sit silently.
+      `;
       messagesBox.appendChild(emptyNotice);
     }
 
-    // Connect via Pusher if available
-    if (pusherInstance) {
-      if (activePusherChannel) {
-        pusherInstance.unsubscribe(activePusherChannel.name);
-      }
-      activePusherChannel = pusherInstance.subscribe(channelName);
-
-      activePusherChannel.bind('pusher:subscription_succeeded', (members) => {
-        const count = members.count || 1;
-        document.getElementById('count-' + room).innerText = count + ' online';
-        updateConnStatus('connected', 'Live (' + count + ' online)');
-        const emptyNotice = document.getElementById('emptyNotice');
-        if (emptyNotice) emptyNotice.remove();
-      });
-
-      activePusherChannel.bind('pusher:member_added', () => {
-        const count = activePusherChannel.members ? activePusherChannel.members.count : 1;
-        document.getElementById('count-' + room).innerText = count + ' online';
-      });
-
-      activePusherChannel.bind('pusher:member_removed', () => {
-        const count = activePusherChannel.members ? activePusherChannel.members.count : 1;
-        document.getElementById('count-' + room).innerText = count + ' online';
-      });
-
-      activePusherChannel.bind('new-message', (data) => {
-        const emptyNotice = document.getElementById('emptyNotice');
-        if (emptyNotice) emptyNotice.remove();
-        renderMessage(data);
-      });
+    // Unsubscribe from previous realtime channel
+    if (activeRealtimeChannel) {
+      activeRealtimeChannel.unsubscribe();
     }
 
-    // Background polling for zero dropped messages
-    if (pollInterval) clearInterval(pollInterval);
-    pollInterval = setInterval(async () => {
-      const fresh = await OMD.fetchMessages(channelName, latestMsgTimestamp);
-      if (fresh && fresh.length > 0) {
+    // Subscribe to Supabase Realtime (Live messages & True online count)
+    activeRealtimeChannel = await OMD.subscribeRoom(
+      room,
+      (newMsg) => {
         const emptyNotice = document.getElementById('emptyNotice');
         if (emptyNotice) emptyNotice.remove();
-        fresh.forEach(renderMessage);
+        renderMessage(newMsg);
+      },
+      (onlineCount, presenceState) => {
+        const count = onlineCount || 1;
+        document.getElementById('count-' + room).innerText = count + ' online';
+        updateConnStatus('connected', 'Live (' + count + ' online)');
+
+        // 10-person capacity warning
+        if (count >= 10) {
+          roomFullAlert.style.display = 'block';
+        } else {
+          roomFullAlert.style.display = 'none';
+        }
       }
-    }, 2500);
+    );
+
+    if (activeRealtimeChannel) {
+      updateConnStatus('connected', 'Connected');
+    } else {
+      updateConnStatus('disconnected', 'Database not connected (check Vercel env)');
+    }
   }
 
-  // 4. Send Message Handler
+  // 4. Send Message Handler (Persists to Supabase DB + Live Broadcast)
   async function postMessage() {
     const raw = chatInput.value.trim();
     if (!raw) return;
@@ -441,19 +491,22 @@
       return;
     }
 
-    // Clear empty notice
+    // Crisis keyword check on sender
+    if (OMD.checkForCrisis(raw)) {
+      crisisCard.style.display = 'block';
+      crisisCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     const emptyNotice = document.getElementById('emptyNotice');
     if (emptyNotice) emptyNotice.remove();
 
     chatInput.value = '';
     lastSentTime = now;
 
-    const channelName = getChannelName(currentRoom);
-
-    // Send via API (handles server Pusher broadcast + in-memory store)
-    const res = await OMD.sendMessage(channelName, raw);
-    if (res && res.message) {
-      renderMessage(res.message);
+    // Insert directly into Supabase database
+    const saved = await OMD.insertMessage(currentRoom, raw);
+    if (saved) {
+      renderMessage(saved);
     }
   }
 
@@ -462,7 +515,7 @@
     if (e.key === 'Enter') postMessage();
   });
 
-  // 5. Room switching click handlers (Smooth in-page transition)
+  // 5. Room switching click handlers
   document.querySelectorAll('.circle-nav-item').forEach(el => {
     el.addEventListener('click', function(e) {
       e.preventDefault();
@@ -473,64 +526,30 @@
     });
   });
 
-  // 6. 1-on-1 Invite System
-  let pendingDmId = '';
-  let pendingPeerName = '';
+  // 6. Random 1-on-1 Matchmaking
+  startMatchBtn.addEventListener('click', async function() {
+    matchModal.classList.add('active');
 
-  window.triggerInvite = function(peer) {
-    if (peer === myName) return;
-    pendingPeerName = peer;
-    pendingDmId = 'dm-' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+    const result = await OMD.joinMatchQueue((roomId, peer) => {
+      // Callback fired when another peer pairs with us while waiting
+      window.location.href = `/dm?id=${encodeURIComponent(roomId)}&peer=${encodeURIComponent(peer)}`;
+    });
 
-    document.getElementById('modalPeerName').innerText = `Invite ${peer} to 1-on-1`;
-    document.getElementById('modalPromptText').innerText = `Send a private invitation to ${peer}? If they accept, you will both enter an ephemeral 1-on-1 sanctuary.`;
-    document.getElementById('acceptInviteBtn').innerText = 'Send Invitation';
-    document.getElementById('inviteModal').classList.add('active');
-  };
-
-  function showDmInviteReceived(fromPeer, dmId) {
-    if (OMD.isBlocked(fromPeer)) return;
-    pendingPeerName = fromPeer;
-    pendingDmId = dmId;
-
-    document.getElementById('modalPeerName').innerText = `1-on-1 Request from ${fromPeer}`;
-    document.getElementById('modalPromptText').innerText = `${fromPeer} has invited you to a private 1-on-1 sanctuary. Would you like to accept?`;
-    document.getElementById('acceptInviteBtn').innerText = 'Accept 1-on-1';
-    document.getElementById('inviteModal').classList.add('active');
-  }
-
-  document.getElementById('acceptInviteBtn').addEventListener('click', async function() {
-    const isSending = (this.innerText === 'Send Invitation');
-    document.getElementById('inviteModal').classList.remove('active');
-
-    if (isSending) {
-      const channelName = getChannelName(currentRoom);
-      await OMD.sendMessage(channelName, '', {
-        type: 'dm-invite',
-        target: pendingPeerName,
-        dmId: pendingDmId
-      });
-      window.location.href = `/dm?id=${encodeURIComponent(pendingDmId)}&peer=${encodeURIComponent(pendingPeerName)}`;
-    } else {
-      window.location.href = `/dm?id=${encodeURIComponent(pendingDmId)}&peer=${encodeURIComponent(pendingPeerName)}`;
+    if (result && result.status === 'matched') {
+      // Immediate match found!
+      window.location.href = `/dm?id=${encodeURIComponent(result.roomId)}&peer=${encodeURIComponent(result.peerNickname)}`;
     }
   });
 
-  document.getElementById('declineInviteBtn').addEventListener('click', function() {
-    document.getElementById('inviteModal').classList.remove('active');
+  cancelMatchBtn.addEventListener('click', async function() {
+    matchModal.classList.remove('active');
+    await OMD.leaveMatchQueue();
   });
 
-  // Direct 1-on-1 room creation
-  startDmBtn.addEventListener('click', function() {
-    const randomDmId = 'dm-' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-    window.location.href = `/dm?id=${randomDmId}&peer=Peer`;
-  });
-
-  // 7. Muting & Reporting Actions
+  // 7. Mute & Report Actions
   window.mutePeer = function(peer) {
     if (confirm(`Mute ${peer}? All current and future reflections from ${peer} will be hidden for you.`)) {
       OMD.blockUser(peer);
-      // Remove visible bubbles from DOM
       document.querySelectorAll(`[data-author="${peer}"]`).forEach(el => el.remove());
     }
   };
@@ -547,29 +566,15 @@
   });
 
   document.getElementById('confirmReportBtn').addEventListener('click', async () => {
-    const reason = document.querySelector('input[name="reportReason"]:checked')?.value || 'Inappropriate behavior';
+    const reason = document.querySelector('input[name="reportReason"]:checked')?.value || 'Inappropriate language';
     document.getElementById('reportModal').classList.remove('active');
 
-    await OMD.reportUser(reportTarget, reason);
+    await OMD.reportUser(reportTarget, reason, currentRoom);
     document.querySelectorAll(`[data-author="${reportTarget}"]`).forEach(el => el.remove());
     alert(`Thank you. ${reportTarget} has been reported and muted.`);
   });
 
-  // 8. Initialize Real-Time Layer (Pusher + Fallback)
-  const config = await OMD.getConfig();
-  if (config.configured && config.pusherKey) {
-    pusherInstance = OMD.initPusher(config.pusherKey, config.pusherCluster);
-    if (pusherInstance) {
-      pusherInstance.connection.bind('connected', () => updateConnStatus('connected', 'Live'));
-      pusherInstance.connection.bind('connecting', () => updateConnStatus('connecting', 'Connecting...'));
-      pusherInstance.connection.bind('unavailable', () => updateConnStatus('fallback', 'Active'));
-      pusherInstance.connection.bind('failed', () => updateConnStatus('fallback', 'Active'));
-    }
-  } else {
-    updateConnStatus('fallback', 'Active');
-  }
-
-  // Join the selected campfire circle
+  // Initialize room
   await joinRoom(currentRoom);
 
 })();

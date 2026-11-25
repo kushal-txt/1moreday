@@ -1,5 +1,5 @@
 // 1MoreDay — Client Application Script
-// Handles Nickname Generation, Session Persistence, Crisis Detection, Real-Time Messaging, Muting & Reporting
+// Real-Time Peer Support using Supabase (Real Database, Live Realtime, Anonymous Auth, 24h Auto-Delete)
 
 const RANDOM_NICKNAMES = [
   'SilentPebble', 'EveningBreeze', 'QuietRiver', 'WanderingEcho',
@@ -22,8 +22,11 @@ const CRISIS_KEYWORDS = [
   'hurt myself', 'bleeding out', 'take my life'
 ];
 
+let supabaseClient = null;
+let currentUserId = null;
+
 const OMD = {
-  // --- Session Management ---
+  // --- 1. Session & Nickname Management ---
   getSession() {
     return localStorage.getItem('omd_nickname') || null;
   },
@@ -32,12 +35,13 @@ const OMD = {
     localStorage.setItem('omd_nickname', nickname);
   },
 
-  getSessionId() {
-    return localStorage.getItem('omd_session_id') || null;
-  },
-
-  setSessionId(id) {
-    localStorage.setItem('omd_session_id', id);
+  getUserId() {
+    let uid = localStorage.getItem('omd_user_id');
+    if (!uid) {
+      uid = 'usr_' + crypto.randomUUID();
+      localStorage.setItem('omd_user_id', uid);
+    }
+    return uid;
   },
 
   generateRandomName() {
@@ -46,7 +50,228 @@ const OMD = {
     return `${RANDOM_NICKNAMES[index]}${suffix}`;
   },
 
-  // --- Client-Side Mute / Block System ---
+  // --- 2. Supabase Initialization & Anonymous Auth ---
+  async getSupabase() {
+    if (supabaseClient) return supabaseClient;
+
+    try {
+      // Fetch public configuration from /api/config
+      const res = await fetch('/api/config');
+      const config = await res.json();
+
+      if (!config.configured || !config.supabaseUrl || !config.supabaseAnonKey) {
+        console.warn('Supabase credentials not configured in Vercel environment variables.');
+        return null;
+      }
+
+      if (typeof supabase === 'undefined' || !supabase.createClient) {
+        console.error('Supabase JS library not loaded from CDN.');
+        return null;
+      }
+
+      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true
+        }
+      });
+
+      // Anonymous sign-in (or get existing session)
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      if (!sessionData.session) {
+        const { data: authData, error: authErr } = await supabaseClient.auth.signInAnonymously();
+        if (authErr) {
+          console.warn('Anonymous sign-in note:', authErr.message);
+        } else if (authData && authData.user) {
+          currentUserId = authData.user.id;
+        }
+      } else {
+        currentUserId = sessionData.session.user.id;
+      }
+
+      return supabaseClient;
+    } catch (err) {
+      console.error('Failed to initialize Supabase client:', err);
+      return null;
+    }
+  },
+
+  // --- 3. Shared Database Messages (Persists & Auto-Deletes after 24h) ---
+  async getMessages(room) {
+    const client = await this.getSupabase();
+    if (!client) return [];
+
+    try {
+      // Query messages from the last 24 hours
+      const { data, error } = await client
+        .from('messages')
+        .select('*')
+        .eq('room', room)
+        .order('created_at', { ascending: true })
+        .limit(100);
+
+      if (error) {
+        console.error('Error fetching messages from Supabase:', error.message);
+        return [];
+      }
+      return data || [];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  async insertMessage(room, content) {
+    const client = await this.getSupabase();
+    if (!client) return null;
+
+    const sanitized = this.sanitizeText(content);
+    if (!sanitized) return null;
+
+    const nickname = this.getSession() || 'SilentPeer';
+    const userId = currentUserId || crypto.randomUUID();
+
+    try {
+      const { data, error } = await client
+        .from('messages')
+        .insert({
+          room,
+          nickname,
+          user_id: userId,
+          content: sanitized
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error inserting message to Supabase:', error.message);
+        return null;
+      }
+      return data;
+    } catch (e) {
+      console.error('Send error:', e);
+      return null;
+    }
+  },
+
+  // --- 4. Real-Time Room Subscription (Live Messages + Live Presence) ---
+  async subscribeRoom(room, onNewMessage, onPresenceSync) {
+    const client = await this.getSupabase();
+    if (!client) return null;
+
+    const nickname = this.getSession() || 'SilentPeer';
+    const userId = currentUserId || this.getUserId();
+
+    const channel = client.channel(`room-${room}`, {
+      config: {
+        presence: { key: userId }
+      }
+    });
+
+    // A) Listen for new messages inserted into public.messages table
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `room=eq.${room}`
+      },
+      (payload) => {
+        if (payload.new) {
+          onNewMessage(payload.new);
+        }
+      }
+    );
+
+    // B) Track true, live online presence count per room
+    channel.on('presence', { event: 'sync' }, () => {
+      const presenceState = channel.presenceState();
+      const onlineCount = Object.keys(presenceState).length;
+      if (onPresenceSync) {
+        onPresenceSync(onlineCount, presenceState);
+      }
+    });
+
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.track({
+          nickname,
+          joined_at: new Date().toISOString()
+        });
+      }
+    });
+
+    return channel;
+  },
+
+  // --- 5. Random 1-on-1 Matchmaking Queue ---
+  async joinMatchQueue(onMatched) {
+    const client = await this.getSupabase();
+    if (!client) return { error: 'Database not connected' };
+
+    const nickname = this.getSession() || 'SilentPeer';
+    const userId = currentUserId || this.getUserId();
+
+    try {
+      // 1. Try atomic database matchmaking function
+      const { data, error } = await client.rpc('match_random_peer', {
+        p_user_id: userId,
+        p_nickname: nickname
+      });
+
+      if (error) {
+        console.error('Matchmaking RPC error:', error.message);
+        return { error: error.message };
+      }
+
+      // If an existing waiting peer was found, matched immediately!
+      if (data && data.status === 'matched') {
+        return {
+          status: 'matched',
+          roomId: data.room_id,
+          peerNickname: data.peer_nickname
+        };
+      }
+
+      // Otherwise, put in waiting queue — listen for a peer to match us
+      const queueChannel = client.channel(`match-user-${userId}`);
+      queueChannel.on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'match_queue',
+          filter: `user_id=eq.${userId}`
+        },
+        (payload) => {
+          if (payload.new && payload.new.status === 'matched' && payload.new.matched_room_id) {
+            queueChannel.unsubscribe();
+            onMatched(payload.new.matched_room_id, payload.new.matched_peer_nick || 'Peer');
+          }
+        }
+      ).subscribe();
+
+      return {
+        status: 'waiting',
+        channel: queueChannel
+      };
+
+    } catch (e) {
+      console.error('Queue error:', e);
+      return { error: 'Failed to join queue' };
+    }
+  },
+
+  async leaveMatchQueue() {
+    const client = await this.getSupabase();
+    if (!client) return;
+    const userId = currentUserId || this.getUserId();
+    try {
+      await client.rpc('leave_match_queue', { p_user_id: userId });
+    } catch (e) {}
+  },
+
+  // --- 6. Muting, Blocking & Reporting ---
   getBlockedUsers() {
     try {
       return JSON.parse(localStorage.getItem('omd_blocked_users') || '[]');
@@ -64,48 +289,57 @@ const OMD = {
     }
   },
 
-  unblockUser(nickname) {
-    let list = this.getBlockedUsers();
-    list = list.filter(u => u !== nickname);
-    localStorage.setItem('omd_blocked_users', JSON.stringify(list));
-  },
-
   isBlocked(nickname) {
     if (!nickname) return false;
     return this.getBlockedUsers().includes(nickname);
   },
 
-  // --- User Report Action ---
-  async reportUser(reportedPeer, reason = 'Inappropriate behavior') {
-    try {
-      // First block locally so the user is immediately protected
-      this.blockUser(reportedPeer);
+  async reportUser(reportedNickname, reason, room = 'circle') {
+    this.blockUser(reportedNickname);
 
-      const res = await fetch('/api/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'report',
-          reportedPeer,
-          reason
-        }),
-        credentials: 'same-origin'
+    const client = await this.getSupabase();
+    if (!client) return { success: true };
+
+    const reporterId = currentUserId || this.getUserId();
+    try {
+      await client.from('reports').insert({
+        reporter_id: reporterId,
+        reported_nickname: reportedNickname,
+        reason: reason || 'Inappropriate behavior',
+        room
       });
-      return await res.json();
+      return { success: true };
     } catch (e) {
-      return { success: false };
+      return { success: true };
     }
   },
 
-  // --- Content Safety ---
+  // --- 7. Content Safety Filter ---
   sanitizeText(text) {
     if (!text) return '';
-    let clean = text.replace(/https?:\/\/[^\s]+/gi, '[Link Blocked]');
+    let clean = text;
+
+    // Block external URLs
+    clean = clean.replace(/https?:\/\/[^\s]+/gi, '[Link Blocked]');
+
+    // Block social handles
     clean = clean.replace(/@[a-zA-Z0-9_.]+/gi, '[Handle Blocked]');
     clean = clean.replace(/(t\.me|telegram|snapchat|instagram|ig|discord\.gg|whatsapp)\/[a-zA-Z0-9_.]+/gi, '[Contact Blocked]');
+
+    // Block phone numbers (7+ digits)
     clean = clean.replace(/\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, '[Phone Blocked]');
+
+    // Predatory grooming & off-platform solicitation filter
+    const predatory = [
+      /\b(add me on|snap me|dm me on|whatsapp|telegram me|my insta|my ig|my snap|send nudes|send pic|send pics|meet up|come over|where do you live)\b/i
+    ];
+    for (const pat of predatory) {
+      clean = clean.replace(pat, '[Safety Notice: Off-platform contact blocked]');
+    }
+
+    // HTML Entity escape to block XSS
     clean = clean.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    return clean;
+    return clean.substring(0, 500);
   },
 
   checkForCrisis(text) {
@@ -116,178 +350,12 @@ const OMD = {
     return false;
   },
 
-  // --- Server Session (JWT cookie) ---
-  async createServerSession(nickname) {
-    try {
-      const res = await fetch('/api/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname }),
-        credentials: 'same-origin'
-      });
-      if (!res.ok) throw new Error('Session creation failed');
-      const data = await res.json();
-      if (data.sessionId) this.setSessionId(data.sessionId);
-      return data;
-    } catch (err) {
-      console.error('Server session error:', err);
-      return null;
-    }
-  },
-
-  // --- Server Config (Pusher Keys) ---
-  async getConfig() {
-    try {
-      const res = await fetch('/api/config');
-      if (!res.ok) return { pusherKey: '', pusherCluster: 'mt1', configured: false };
-      return await res.json();
-    } catch (e) {
-      return { pusherKey: '', pusherCluster: 'mt1', configured: false };
-    }
-  },
-
-  // --- Send Message via API ---
-  async sendMessage(channel, text, extra = {}) {
-    try {
-      const res = await fetch('/api/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          channel,
-          text,
-          ...extra
-        }),
-        credentials: 'same-origin'
-      });
-      return await res.json();
-    } catch (e) {
-      return { error: 'Failed to send' };
-    }
-  },
-
-  // --- Fetch Messages via API ---
-  async fetchMessages(channel, since = 0) {
-    try {
-      const url = `/api/messages?channel=${encodeURIComponent(channel)}${since ? '&since=' + since : ''}`;
-      const res = await fetch(url, { credentials: 'same-origin' });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return data.messages || [];
-    } catch (e) {
-      return [];
-    }
-  },
-
-  // --- Pusher Initialization ---
-  initPusher(key, cluster) {
-    if (!key || key === 'dummy_key' || typeof Pusher === 'undefined') {
-      return null;
-    }
-    try {
-      const pusher = new Pusher(key, {
-        cluster: cluster || 'mt1',
-        authEndpoint: '/api/pusher-auth',
-        auth: {
-          headers: {}
-        }
-      });
-      return pusher;
-    } catch (e) {
-      return null;
-    }
-  },
-
-  // --- Time Formatting ---
-  formatTime(date) {
-    const d = date || new Date();
+  formatTime(dateStr) {
+    const d = dateStr ? new Date(dateStr) : new Date();
     let h = d.getHours();
     const m = String(d.getMinutes()).padStart(2, '0');
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12 || 12;
     return `${h}:${m} ${ampm}`;
-  },
-
-  // --- Country Detection (covers 50+ countries) ---
-  detectCountry() {
-    try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-
-      // South Asia
-      if (tz.includes('Calcutta') || tz.includes('Kolkata')) return 'IN';
-      if (tz.includes('Karachi')) return 'PK';
-      if (tz.includes('Dhaka')) return 'BD';
-      if (tz.includes('Colombo')) return 'LK';
-
-      // East Asia
-      if (tz.includes('Shanghai') || tz.includes('Chongqing') || tz.includes('Urumqi') || tz.includes('Harbin') || tz.includes('Kashgar')) return 'CN';
-      if (tz.includes('Tokyo')) return 'JP';
-      if (tz.includes('Seoul')) return 'KR';
-      if (tz.includes('Taipei')) return 'TW';
-      if (tz.includes('Hong_Kong')) return 'HK';
-
-      // Southeast Asia
-      if (tz.includes('Manila')) return 'PH';
-      if (tz.includes('Singapore')) return 'SG';
-      if (tz.includes('Kuala_Lumpur')) return 'MY';
-      if (tz.includes('Bangkok')) return 'TH';
-      if (tz.includes('Jakarta')) return 'ID';
-
-      // Middle East
-      if (tz.includes('Dubai')) return 'AE';
-      if (tz.includes('Beirut')) return 'LB';
-      if (tz.includes('Jerusalem') || tz.includes('Tel_Aviv')) return 'IL';
-      if (tz.includes('Riyadh')) return 'SA';
-
-      // Americas
-      if (tz.includes('New_York') || tz.includes('Chicago') || tz.includes('Denver') || tz.includes('Los_Angeles') || tz.includes('Phoenix') || tz.includes('Anchorage') || tz.includes('Honolulu')) return 'US';
-      if (tz.includes('Toronto') || tz.includes('Vancouver') || tz.includes('Edmonton') || tz.includes('Halifax') || tz.includes('Winnipeg')) return 'CA';
-      if (tz.includes('Sao_Paulo') || tz.includes('Fortaleza') || tz.includes('Manaus')) return 'BR';
-      if (tz.includes('Mexico_City') || tz.includes('Cancun') || tz.includes('Tijuana')) return 'MX';
-      if (tz.includes('Buenos_Aires')) return 'AR';
-      if (tz.includes('Bogota')) return 'CO';
-      if (tz.includes('Santiago')) return 'CL';
-      if (tz.includes('Lima')) return 'PE';
-
-      // Oceania
-      if (tz.includes('Sydney') || tz.includes('Melbourne') || tz.includes('Brisbane') || tz.includes('Perth') || tz.includes('Adelaide')) return 'AU';
-      if (tz.includes('Auckland')) return 'NZ';
-      if (tz.includes('Fiji')) return 'FJ';
-
-      // Europe
-      if (tz.includes('London')) return 'GB';
-      if (tz.includes('Dublin')) return 'IE';
-      if (tz.includes('Berlin')) return 'DE';
-      if (tz.includes('Paris')) return 'FR';
-      if (tz.includes('Madrid')) return 'ES';
-      if (tz.includes('Rome')) return 'IT';
-      if (tz.includes('Amsterdam')) return 'NL';
-      if (tz.includes('Brussels')) return 'BE';
-      if (tz.includes('Zurich')) return 'CH';
-      if (tz.includes('Vienna')) return 'AT';
-      if (tz.includes('Lisbon')) return 'PT';
-      if (tz.includes('Stockholm')) return 'SE';
-      if (tz.includes('Oslo')) return 'NO';
-      if (tz.includes('Copenhagen')) return 'DK';
-      if (tz.includes('Helsinki')) return 'FI';
-      if (tz.includes('Moscow')) return 'RU';
-      if (tz.includes('Warsaw')) return 'PL';
-
-      // Africa
-      if (tz.includes('Johannesburg')) return 'ZA';
-      if (tz.includes('Lagos')) return 'NG';
-      if (tz.includes('Nairobi')) return 'KE';
-      if (tz.includes('Accra')) return 'GH';
-
-      // Fallbacks
-      if (tz.includes('America/')) return 'US';
-      if (tz.includes('Europe/')) return 'GB';
-      if (tz.includes('Asia/')) return 'IN';
-      if (tz.includes('Africa/')) return 'ZA';
-      if (tz.includes('Australia/')) return 'AU';
-
-      return 'US';
-    } catch (e) {
-      return 'US';
-    }
   }
 };

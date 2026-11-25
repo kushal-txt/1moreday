@@ -1,11 +1,14 @@
-// api/config.js - Public configuration for client real-time connection
+// api/config.js - Public configuration for client Supabase real-time connection
 module.exports = async (req, res) => {
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.setHeader('Content-Type', 'application/json');
 
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
   return res.status(200).json({
-    pusherKey: process.env.PUSHER_KEY || '',
-    pusherCluster: process.env.PUSHER_CLUSTER || 'mt1',
-    configured: Boolean(process.env.PUSHER_KEY && process.env.PUSHER_APP_ID && process.env.PUSHER_SECRET)
+    supabaseUrl,
+    supabaseAnonKey,
+    configured: Boolean(supabaseUrl && supabaseAnonKey)
   });
 };
