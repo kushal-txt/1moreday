@@ -358,5 +358,100 @@ const OMD = {
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12 || 12;
     return `${h}:${m} ${ampm}`;
+  },
+
+  // --- 7. Grounding Sanctuary & Soothing Waiting Experience ---
+  SOOTHING_WORDS: [
+    {
+      quote: "Breathe in slowly. You have held so much for so long. For just this minute, you don't have to carry it all.",
+      meta: "Drop your shoulders · Let your hands rest"
+    },
+    {
+      quote: "Whatever brought you here tonight—heartbreak, exhaustion, loneliness, or quiet panic—it is real, and you survived today.",
+      meta: "Your pain is valid · You are not overreacting"
+    },
+    {
+      quote: "Unclench your jaw. Relax the muscles around your eyes. You are safe in this quiet corner.",
+      meta: "Take a quiet sip of water if you can"
+    },
+    {
+      quote: "Somewhere on the other side of this screen, another human being is looking into the dark, gathering their courage to speak too.",
+      meta: "You are not the only one fighting this quiet battle"
+    },
+    {
+      quote: "You do not need to have everything figured out tonight. Just making it through to tomorrow is enough.",
+      meta: "One breath at a time · One hour at a time"
+    },
+    {
+      quote: "There are no expectations here. You don't have to be strong, put together, or articulate. Just being here is enough.",
+      meta: "You do not have to perform for anyone tonight"
+    },
+    {
+      quote: "You have survived 100% of the hardest days of your life up until this moment. Give yourself permission to rest.",
+      meta: "You are still here · That took immense strength"
+    }
+  ],
+
+  BREATH_CYCLE: [
+    { action: "Breathe In", helper: "Slowly inhale through your nose · 4s", cls: "inhale" },
+    { action: "Hold", helper: "Softly hold the stillness in your chest · 4s", cls: "hold" },
+    { action: "Exhale", helper: "Slowly release all the tension out · 4s", cls: "exhale" },
+    { action: "Rest", helper: "Quiet pause in the stillness · 4s", cls: "rest" }
+  ],
+
+  startGroundingSanctuary({ quoteEl, metaEl, breathBoxEl, breathActionEl, breathHelperEl, fallbackEl, onFallback }) {
+    let quoteIdx = 0;
+    let breathIdx = 0;
+
+    // Initialize immediate first view
+    if (quoteEl && this.SOOTHING_WORDS.length > 0) {
+      quoteEl.textContent = `"${this.SOOTHING_WORDS[0].quote}"`;
+      if (metaEl) metaEl.textContent = this.SOOTHING_WORDS[0].meta;
+    }
+    if (breathBoxEl && this.BREATH_CYCLE.length > 0) {
+      breathBoxEl.className = 'breath-box ' + this.BREATH_CYCLE[0].cls;
+      if (breathActionEl) breathActionEl.textContent = this.BREATH_CYCLE[0].action;
+      if (breathHelperEl) breathHelperEl.textContent = this.BREATH_CYCLE[0].helper;
+    }
+
+    // Cycle breath every 4 seconds (Clinically grounded Box Breathing)
+    const breathTimer = setInterval(() => {
+      breathIdx = (breathIdx + 1) % this.BREATH_CYCLE.length;
+      const step = this.BREATH_CYCLE[breathIdx];
+      if (breathBoxEl) breathBoxEl.className = 'breath-box ' + step.cls;
+      if (breathActionEl) breathActionEl.textContent = step.action;
+      if (breathHelperEl) breathHelperEl.textContent = step.helper;
+    }, 4000);
+
+    // Rotate soothing quote every 7.5 seconds with soft fade
+    const quoteTimer = setInterval(() => {
+      quoteIdx = (quoteIdx + 1) % this.SOOTHING_WORDS.length;
+      const nextWord = this.SOOTHING_WORDS[quoteIdx];
+      if (quoteEl) {
+        quoteEl.style.opacity = '0';
+        if (metaEl) metaEl.style.opacity = '0';
+        setTimeout(() => {
+          quoteEl.textContent = `"${nextWord.quote}"`;
+          if (metaEl) metaEl.textContent = nextWord.meta;
+          quoteEl.style.opacity = '1';
+          if (metaEl) metaEl.style.opacity = '1';
+        }, 350);
+      }
+    }, 7500);
+
+    // Reassurance timeout: If 35 seconds elapse without a match, gently present options
+    let fallbackTimer = null;
+    if (fallbackEl) {
+      fallbackTimer = setTimeout(() => {
+        fallbackEl.style.display = 'block';
+        if (typeof onFallback === 'function') onFallback();
+      }, 35000);
+    }
+
+    return function stopSanctuary() {
+      clearInterval(breathTimer);
+      clearInterval(quoteTimer);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
   }
 };

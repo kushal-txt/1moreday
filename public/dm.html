@@ -176,12 +176,78 @@
 
   <!-- Direct Queue State (if arrived without room) -->
   <div id="queueScreen" class="queue-card" style="display: none;">
-    <h2>Random 1-on-1 Sanctuary</h2>
-    <p>Connect with a single anonymous peer carrying life burdens. No choosing strangers — our system pairs you automatically with the next waiting person.</p>
-    <div id="queuePulse" class="pulse-loader" style="display: none;"></div>
-    <div id="queueStatusText" style="font-size: 13px; color: var(--coral); margin-bottom: 16px; display: none;">Looking for a waiting peer...</div>
-    <button type="button" id="startMatchQueueBtn" class="btn-primary" style="width: 100%;">Find a Peer to Talk to</button>
-    <button type="button" id="cancelQueueBtn" class="btn-ghost" style="width: 100%; margin-top: 10px; display: none;">Cancel</button>
+    
+    <!-- State 1: Introductory Card -->
+    <div id="queueIntro">
+      <div class="sanctuary-icon-badge">1-on-1 Quiet Sanctuary</div>
+      <h2>A Safe Space When You Are Carrying Too Much</h2>
+      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px;">
+        When words feel too heavy or sharing in a circle feels too exposed, you can speak privately with another person carrying life burdens. No choosing strangers, no profiles to judge. Just two human beings meeting in the quiet.
+      </p>
+
+      <div class="burden-chips">
+        <span>Quiet Loneliness</span>
+        <span>Overthinking</span>
+        <span>Heartbreak</span>
+        <span>Burnout &amp; Pressure</span>
+        <span>Silent Grief</span>
+      </div>
+
+      <button type="button" id="startMatchQueueBtn" class="btn-primary" style="width: 100%; padding: 14px 20px; font-size: 13px;">
+        Enter Waiting Sanctuary &rarr;
+      </button>
+
+      <div style="margin-top: 14px;">
+        <a href="/circles" class="btn-ghost" style="display: block; width: 100%; text-decoration: none; padding: 10px 16px; font-size: 12px;">
+          Prefer a campfire circle? View Circles &rarr;
+        </a>
+      </div>
+    </div>
+
+    <!-- State 2: Active Waiting Sanctuary with Grounding & Breathing Pacer -->
+    <div id="queueWaiting" style="display: none;">
+      <div class="waiting-header-pill">
+        <span class="dot-pulse"></span> Reaching for an anonymous peer...
+      </div>
+
+      <!-- Breathing Box Pacer -->
+      <div class="breath-pacer-container">
+        <div class="breath-box" id="dmBreathBox">
+          <span class="breath-action-text" id="dmBreathAction">Breathe In</span>
+        </div>
+        <div class="breath-instruction" id="dmBreathHelper">Slowly inhale through your nose · 4s</div>
+      </div>
+
+      <!-- Rotating Soothing & Grounding Words -->
+      <div class="grounding-card">
+        <div class="grounding-quote" id="dmGroundingQuote">
+          "Breathe in slowly. You have held so much for so long. For just this minute, you don't have to carry it all."
+        </div>
+        <div class="grounding-meta" id="dmGroundingMeta">
+          Drop your shoulders · Let your hands rest
+        </div>
+      </div>
+
+      <!-- Gentle Fallback if waiting takes longer than 35s -->
+      <div id="dmQueueFallback" class="queue-fallback" style="display: none;">
+        <div class="fallback-title">The night is quiet right now, but you are not alone.</div>
+        <p class="fallback-text">
+          No other peer has stepped into the 1-on-1 queue at this exact second. If waiting feels too quiet or heavy, you have safe, immediate spaces:
+        </p>
+        <div class="fallback-actions">
+          <a href="/circles" class="btn-primary" style="font-size: 11px; padding: 8px 14px; text-decoration: none;">Join Campfire Circles</a>
+          <a href="tel:14416" class="crisis-btn" style="font-size: 11px; padding: 8px 14px; text-decoration: none;">Tele-MANAS: 14416</a>
+        </div>
+        <div style="margin-top: 12px; font-size: 11px; color: var(--text-muted);">
+          You can keep waiting here — we will connect you the instant another peer joins.
+        </div>
+      </div>
+
+      <button type="button" id="cancelQueueBtn" class="btn-ghost" style="width: 100%; margin-top: 24px; font-size: 12px; padding: 10px 16px;">
+        Leave Waiting Room
+      </button>
+    </div>
+
   </div>
 
   <!-- Active 1-on-1 Encounter Chat Screen -->
@@ -276,8 +342,6 @@
   const leaveBtn = document.getElementById('leaveBtn');
   const startMatchQueueBtn = document.getElementById('startMatchQueueBtn');
   const cancelQueueBtn = document.getElementById('cancelQueueBtn');
-  const queuePulse = document.getElementById('queuePulse');
-  const queueStatusText = document.getElementById('queueStatusText');
 
   let activeRealtimeChannel = null;
   let renderedMessageIds = new Set();
@@ -294,24 +358,50 @@
     chatScreen.style.display = 'none';
     updateStatus('waiting', 'In Waiting Room');
 
+    const queueIntro = document.getElementById('queueIntro');
+    const queueWaiting = document.getElementById('queueWaiting');
+    const dmBreathBox = document.getElementById('dmBreathBox');
+    const dmBreathAction = document.getElementById('dmBreathAction');
+    const dmBreathHelper = document.getElementById('dmBreathHelper');
+    const dmGroundingQuote = document.getElementById('dmGroundingQuote');
+    const dmGroundingMeta = document.getElementById('dmGroundingMeta');
+    const dmQueueFallback = document.getElementById('dmQueueFallback');
+
+    let stopGrounding = null;
+
     async function triggerMatch() {
-      startMatchQueueBtn.style.display = 'none';
-      cancelQueueBtn.style.display = 'block';
-      queuePulse.style.display = 'block';
-      queueStatusText.style.display = 'block';
+      queueIntro.style.display = 'none';
+      queueWaiting.style.display = 'block';
+
+      // Start the soothing words and rhythmic breath pacer
+      stopGrounding = OMD.startGroundingSanctuary({
+        quoteEl: dmGroundingQuote,
+        metaEl: dmGroundingMeta,
+        breathBoxEl: dmBreathBox,
+        breathActionEl: dmBreathAction,
+        breathHelperEl: dmBreathHelper,
+        fallbackEl: dmQueueFallback
+      });
 
       const res = await OMD.joinMatchQueue((matchedId, matchedPeer) => {
+        if (stopGrounding) stopGrounding();
         window.location.href = `/dm?id=${encodeURIComponent(matchedId)}&peer=${encodeURIComponent(matchedPeer)}`;
       });
 
       if (res && res.status === 'matched') {
+        if (stopGrounding) stopGrounding();
         window.location.href = `/dm?id=${encodeURIComponent(res.roomId)}&peer=${encodeURIComponent(res.peerNickname)}`;
       }
     }
 
     startMatchQueueBtn.addEventListener('click', triggerMatch);
     cancelQueueBtn.addEventListener('click', async () => {
+      if (stopGrounding) stopGrounding();
       await OMD.leaveMatchQueue();
+      window.location.href = '/circles';
+    });
+    return;
+  }
       window.location.href = '/circles';
     });
     return;

@@ -258,9 +258,9 @@
 
       <!-- 1-on-1 Random Matchmaking Card -->
       <div class="dm-match-card">
-        <h4>Need a 1-on-1 listener?</h4>
-        <p>No choosing strangers. Get automatically paired with the next anonymous peer waiting to talk.</p>
-        <button type="button" id="startMatchBtn" class="btn-match">Talk to someone 1-on-1</button>
+        <h4>Need a quiet 1-on-1 space?</h4>
+        <p>If sharing in a circle feels too loud or heavy, speak privately with a single peer carrying similar weight.</p>
+        <button type="button" id="startMatchBtn" class="btn-match">Enter 1-on-1 Sanctuary</button>
       </div>
 
       <div style="padding: 16px 20px; margin-top: auto; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); line-height: 1.4;">
@@ -300,12 +300,39 @@
 
 <!-- Matchmaking Waiting Modal -->
 <div class="modal-overlay" id="matchModal">
-  <div class="modal-box">
-    <h3>Finding an Anonymous Peer...</h3>
-    <div class="pulse-loader"></div>
-    <p>You have been placed in the matching queue. We will automatically connect you as soon as the next peer arrives.</p>
+  <div class="modal-box" style="max-width: 480px; padding: 32px 24px;">
+    <div class="waiting-header-pill" style="margin-bottom: 14px;">
+      <span class="dot-pulse"></span> Reaching for an anonymous peer...
+    </div>
+
+    <!-- Breathing Box Pacer -->
+    <div class="breath-pacer-container">
+      <div class="breath-box" id="circleBreathBox">
+        <span class="breath-action-text" id="circleBreathAction">Breathe In</span>
+      </div>
+      <div class="breath-instruction" id="circleBreathHelper">Slowly inhale through your nose · 4s</div>
+    </div>
+
+    <!-- Rotating Soothing Message -->
+    <div class="grounding-card">
+      <div class="grounding-quote" id="circleGroundingQuote">
+        "Breathe in slowly. You have held so much for so long. For just this minute, you don't have to carry it all."
+      </div>
+      <div class="grounding-meta" id="circleGroundingMeta">
+        Drop your shoulders · Let your hands rest
+      </div>
+    </div>
+
+    <!-- Fallback if waiting exceeds 35s -->
+    <div id="circleMatchSlowFallback" class="queue-fallback" style="display: none; margin-bottom: 16px;">
+      <div class="fallback-title">The queue is quiet right now, but you are not alone.</div>
+      <p class="fallback-text">
+        No other peer has stepped into the 1-on-1 queue yet. You can return to this campfire circle where others are gathered, or stay waiting quietly.
+      </p>
+    </div>
+
     <div class="modal-btns">
-      <button class="btn-ghost" id="cancelMatchBtn">Cancel &amp; Return to Circle</button>
+      <button class="btn-ghost" id="cancelMatchBtn" style="font-size: 12px; padding: 10px 20px;">Return to Circle</button>
     </div>
   </div>
 </div>
@@ -527,21 +554,40 @@
   });
 
   // 6. Random 1-on-1 Matchmaking
+  let stopCircleSanctuary = null;
+
   startMatchBtn.addEventListener('click', async function() {
     matchModal.classList.add('active');
 
+    const circleBreathBox = document.getElementById('circleBreathBox');
+    const circleBreathAction = document.getElementById('circleBreathAction');
+    const circleBreathHelper = document.getElementById('circleBreathHelper');
+    const circleGroundingQuote = document.getElementById('circleGroundingQuote');
+    const circleGroundingMeta = document.getElementById('circleGroundingMeta');
+    const circleMatchSlowFallback = document.getElementById('circleMatchSlowFallback');
+
+    stopCircleSanctuary = OMD.startGroundingSanctuary({
+      quoteEl: circleGroundingQuote,
+      metaEl: circleGroundingMeta,
+      breathBoxEl: circleBreathBox,
+      breathActionEl: circleBreathAction,
+      breathHelperEl: circleBreathHelper,
+      fallbackEl: circleMatchSlowFallback
+    });
+
     const result = await OMD.joinMatchQueue((roomId, peer) => {
-      // Callback fired when another peer pairs with us while waiting
+      if (stopCircleSanctuary) stopCircleSanctuary();
       window.location.href = `/dm?id=${encodeURIComponent(roomId)}&peer=${encodeURIComponent(peer)}`;
     });
 
     if (result && result.status === 'matched') {
-      // Immediate match found!
+      if (stopCircleSanctuary) stopCircleSanctuary();
       window.location.href = `/dm?id=${encodeURIComponent(result.roomId)}&peer=${encodeURIComponent(result.peerNickname)}`;
     }
   });
 
   cancelMatchBtn.addEventListener('click', async function() {
+    if (stopCircleSanctuary) stopCircleSanctuary();
     matchModal.classList.remove('active');
     await OMD.leaveMatchQueue();
   });

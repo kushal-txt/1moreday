@@ -419,3 +419,165 @@ h1, h2, h3, h4, .brand {
     padding: 24px 20px;
   }
 }
+
+/* Grounding Sanctuary & Soothing Waiting States */
+.sanctuary-icon-badge {
+  display: inline-block;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--coral);
+  background: rgba(242, 140, 121, 0.08);
+  border: 1px solid rgba(242, 140, 121, 0.25);
+  padding: 4px 10px;
+  margin-bottom: 14px;
+}
+
+.burden-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 18px 0 24px;
+}
+.burden-chips span {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+}
+
+.waiting-header-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--coral);
+  background: rgba(242, 140, 121, 0.08);
+  border: 1px solid rgba(242, 140, 121, 0.2);
+  padding: 6px 14px;
+  margin-bottom: 18px;
+  font-weight: 600;
+}
+
+.dot-pulse {
+  width: 6px;
+  height: 6px;
+  background: var(--coral);
+  display: inline-block;
+  animation: dotPulseAnim 1.6s infinite ease-in-out;
+}
+@keyframes dotPulseAnim {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Breath Pacer: Rhythmic, square, sharp corners */
+.breath-pacer-container {
+  margin: 16px auto;
+  text-align: center;
+}
+.breath-box {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 3.8s ease-in-out, border-color 3.8s ease-in-out, box-shadow 3.8s ease-in-out;
+  position: relative;
+}
+.breath-box.inhale {
+  transform: scale(1.15);
+  border-color: var(--coral);
+  box-shadow: 0 0 20px rgba(242, 140, 121, 0.2);
+}
+.breath-box.hold {
+  transform: scale(1.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(91, 141, 239, 0.2);
+}
+.breath-box.exhale {
+  transform: scale(0.92);
+  border-color: var(--border);
+  box-shadow: none;
+}
+.breath-box.rest {
+  transform: scale(0.92);
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}
+.breath-action-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.breath-instruction {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-height: 20px;
+  transition: opacity 0.4s ease;
+}
+
+/* Grounding Card */
+.grounding-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--coral);
+  padding: 16px 18px;
+  text-align: left;
+  margin: 18px auto;
+  max-width: 440px;
+}
+.grounding-quote {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+  font-style: italic;
+  min-height: 48px;
+  transition: opacity 0.4s ease;
+}
+.grounding-meta {
+  font-size: 11px;
+  color: var(--coral);
+  margin-top: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: opacity 0.4s ease;
+}
+
+/* Fallback Reassurance when waiting is slow */
+.queue-fallback {
+  background: rgba(242, 140, 121, 0.05);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--coral);
+  padding: 18px;
+  margin-top: 20px;
+  text-align: left;
+}
+.fallback-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.fallback-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.fallback-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
